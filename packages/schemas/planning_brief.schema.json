@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlanningBrief",
+  "type": "object",
+  "required": ["target_customer", "product_positioning", "unit_mix_targets", "risk_preference", "strategy_preference", "notes"],
+  "properties": {
+    "target_customer": {"type": "string"},
+    "product_positioning": {"type": "string"},
+    "unit_mix_targets": {"type": "object", "additionalProperties": {"type": "number"}},
+    "risk_preference": {"enum": ["low", "medium", "high"]},
+    "strategy_preference": {"enum": ["revenue_first", "balanced", "low_risk"]},
+    "notes": {"type": "string"}
+  }
+}
+

@@ -1,0 +1,180 @@
+你是资深 AEC/PropTech 全栈工程师 + 运筹优化工程师。请在当前空仓库中实现 `LandWeaver-Agent`（地织智能体）MVP，目标运行环境为 WSL2 Ubuntu 22.04。请直接创建可运行代码、测试、fixtures、README，不要只写说明。
+
+# 0. 产品目标
+LandWeaver Agent（地织）是面向房地产开发商、投拓团队和方案设计团队的 B 端 AI 强排与测算引擎。用户输入地块红线、规划指标、产品原型和经济假设后，系统用本地确定性几何与优化算法生成多组楼栋排布方案，计算容积率、建筑密度、建面、户数、货值、成本、毛利，并导出 GeoJSON/DXF/CSV。OpenAI 只用于自然语言 PlanningBrief 抽取和基于真实指标的方案解释，不得直接生成最终楼栋几何。
+
+# 1. 强制技术栈
+- Monorepo：`LandWeaver-Agent/`
+- 后端：FastAPI + Pydantic v2 + SQLAlchemy 2 + Alembic + PostgreSQL/PostGIS + Redis/RQ + Shapely + OR-Tools CP-SAT + ezdxf + pandas/openpyxl + OpenAI Python SDK + pytest。
+- 前端：Next.js App Router + TypeScript + Tailwind + Zustand + zod + SVG/Canvas。MVP 不依赖在线地图；使用本地米制坐标画布。
+- 基础设施：`infra/docker-compose.yml` 启动 `postgis/postgis:16-3.4` 和 `redis:7`。
+- Python 3.10+，Node.js 20+。
+
+# 2. 仓库结构
+请创建：
+LandWeaver-Agent/
+  apps/api/
+    app/main.py
+    app/core/config.py
+    app/db/
+    app/models/
+    app/schemas/
+    app/routes/
+    app/services/openai_service.py
+    app/workers/jobs.py
+    tests/
+  apps/web/
+    app/
+    components/
+    lib/api.ts
+    lib/types.ts
+    store/
+  engines/
+    geometry/
+      parcel.py
+      envelope.py
+      collision.py
+      candidates.py
+    optimizer/
+      site_optimizer.py
+      diversity.py
+    profit/
+      calculator.py
+      sensitivity.py
+    export/
+      geojson_exporter.py
+      dxf_exporter.py
+      csv_exporter.py
+  packages/schemas/
+    parcel.schema.json
+    planning_brief.schema.json
+    site_option.schema.json
+  tests/fixtures/
+    rectangular_parcel.json
+    planning_constraints.json
+    tower_prototype.json
+    slab_prototype.json
+  infra/docker-compose.yml
+  .env.example
+  README.md
+
+# 3. 核心数据模型
+实现 Pydantic schema，并在 API、fixtures、测试中复用：
+- Project：id, title, city, created_at, status。
+- Parcel：id, project_id, unit=m, boundary, north_angle_deg, area_m2, source。
+- PlanningBrief：target_customer, product_positioning, unit_mix_targets, risk_preference, strategy_preference, notes。
+- ConstraintSet：far_max, building_density_max, green_ratio_min, height_limit_m, setbacks_m, min_spacing_m, parking_ratio_per_unit, saleable_ratio, assumptions。
+- EconomicAssumptions：avg_selling_price_cny_per_m2, hard_cost_cny_per_m2, land_cost_cny, soft_cost_ratio, tax_ratio, marketing_ratio。
+- BuildingPrototype：type=tower|slab|villa|podium, footprint_width_m, footprint_depth_m, floors_min, floors_max, typical_floor_gfa_m2, units_per_floor, avg_unit_area_m2, height_per_floor_m。
+- BuildingInstance：prototype_id, footprint, centroid, rotation_deg, floors, height_m, gfa_m2, units, violations。
+- SiteOption：id, strategy=revenue_first|balanced|low_risk, parcel_id, buildings, metrics, violations, risk_flags, score, seed。
+- ProfitSnapshot：total_gfa_m2, saleable_area_m2, units, parking_spaces, revenue_cny, hard_cost_cny, total_cost_cny, gross_margin_cny, gross_margin_ratio。
+
+# 4. 后端 API
+必须实现并能通过 pytest happy path：
+1. `POST /api/projects`：创建项目。
+2. `POST /api/projects/{project_id}/parcels`：保存地块 polygon，支持直接传 points；自动计算面积；修复 polygon；source=manual|geojson|dxf_placeholder。
+3. `POST /api/projects/{project_id}/brief`：自然语言 -> PlanningBrief，使用 OpenAI Structured Outputs；无 OPENAI_API_KEY 时 deterministic mock。
+4. `POST /api/projects/{project_id}/constraints`：保存规划与经济约束。
+5. `POST /api/projects/{project_id}/prototypes`：创建楼栋原型。
+6. `POST /api/projects/{project_id}/generate-site-options`：启动 RQ job，返回 job_id。
+7. `GET /api/jobs/{job_id}`：返回 status、stage、progress、result_ids、error。
+8. `GET /api/projects/{project_id}/options`：获取方案列表。
+9. `GET /api/options/{option_id}`：方案详情。
+10. `POST /api/options/{option_id}/explain`：OpenAI 只能基于 metrics/violations/risk_flags 解释；无 key 返回 mock。
+11. `POST /api/options/{option_id}/export?format=geojson|dxf|csv`：导出文件，返回下载路径。
+12. `GET /api/projects/{project_id}`：聚合返回地块、约束、原型、方案。
+
+# 5. Geometry Engine 要求
+必须实现并单测：
+- `normalize_polygon(points)`：修复闭合、方向、自交；无效时返回明确错误。
+- `compute_area_m2(polygon)`。
+- `buildable_envelope(parcel, setbacks_m)`：MVP 可使用 inward buffer 取最保守退界。
+- `candidate_footprints(envelope, prototype, spacing_grid_m, rotations)`：生成离散候选楼栋 footprint。
+- `is_valid_placement(footprint, envelope)`。
+- `compute_conflicts(candidates, min_spacing_m)`：计算候选之间冲突矩阵。
+- `density_area(footprints)`。
+
+# 6. Optimizer 要求
+必须用 OR-Tools CP-SAT：
+- 每个候选楼栋一个 BoolVar。
+- 冲突候选不能同时选择。
+- 总 GFA <= parcel_area * far_max。
+- 总 footprint_area <= parcel_area * building_density_max。
+- 楼栋高度 <= height_limit_m。
+- 目标函数按 strategy 区分：
+  - revenue_first：最大化 revenue/gfa。
+  - balanced：最大化 FAR 利用率 + 毛利 - 风险惩罚。
+  - low_risk：最大化合规余量 + 减少间距/密度风险。
+- 至少生成 3 个方案；通过不同 strategy、seed、候选排序或约束权重实现差异。
+- 无解时返回 infeasible_reason 和 relax_suggestions，例如降低目标 FAR、减少最小间距、调整楼栋原型尺寸。
+
+# 7. Profit Engine 要求
+必须实现并单测：
+- saleable_area = total_gfa * saleable_ratio。
+- units = sum(building.units_per_floor * floors)。
+- parking_spaces = ceil(units * parking_ratio_per_unit)。
+- revenue = saleable_area * avg_selling_price_cny_per_m2。
+- hard_cost = total_gfa * hard_cost_cny_per_m2。
+- total_cost = land_cost + hard_cost * (1 + soft_cost_ratio + tax_ratio + marketing_ratio)。
+- gross_margin = revenue - total_cost。
+- gross_margin_ratio = gross_margin / revenue。
+- sensitivity：售价 ±5%、±10%；建安成本 ±5%。
+
+# 8. Export Engine 要求
+必须实现并单测：
+- GeoJSON：parcel, buildable_envelope, building_footprints，properties 包含 floors/gfa/units/score。
+- DXF：用 ezdxf 输出图层：PARCEL_REDLINE、BUILDABLE_ENVELOPE、BUILDING_FOOTPRINT、BUILDING_LABEL、RISK。
+- CSV：方案指标 summary + building rows。
+
+# 9. OpenAI 使用边界
+所有 OpenAI 调用只能在 `apps/api/app/services/openai_service.py` 中出现。模型名从环境变量读取：
+- `OPENAI_MODEL_TEXT` 默认 `gpt-5.5`。
+- `OPENAI_MODEL_FAST` 默认 `gpt-5.4-mini`。
+实现：
+- `parse_planning_brief(user_text) -> PlanningBrief`：严格 JSON Schema。
+- `explain_site_option(option_metrics, violations, risk_flags) -> str`：不得编造法规；必须显式说明“仅基于用户输入约束和系统计算指标”。
+无 key 时 deterministic mock。
+
+# 10. 前端页面
+使用 Next.js App Router，实现：
+1. `/`：产品首页 + 创建项目按钮，品牌名显示 `LandWeaver Agent（地织）`。
+2. `/projects/[id]/parcel`：SVG/Canvas 绘制地块；提供“插入 120m × 80m 示例地块”按钮；保存到后端。
+3. `/projects/[id]/constraints`：输入 FAR、密度、绿地率、退界、限高、楼间距、售价、建安、地价。
+4. `/projects/[id]/prototypes`：创建 tower/slab 原型。
+5. `/projects/[id]/generate`：启动生成任务，轮询 job。
+6. `/projects/[id]/options`：SVG 展示 parcel、buildable envelope、buildings；表格对比 FAR、密度、建面、户数、货值、成本、毛利、score、violations、risk_flags。
+7. `/projects/[id]/options/[optionId]`：方案详情、AI 解释、导出 GeoJSON/DXF/CSV。
+
+# 11. 测试
+必须提供 pytest：
+- polygon normalize/area。
+- buildable envelope。
+- candidate footprint generation。
+- conflict detection。
+- CP-SAT happy path returns feasible solution。
+- infeasible case returns reason。
+- profit calculation。
+- geojson/dxf/csv export files exist and contain expected layers/columns。
+- API happy path：project -> parcel -> constraints -> prototype -> generate mock -> options -> export。
+
+# 12. README 与启动命令
+README 必须包含：
+- 产品定位。
+- WSL2 Ubuntu 22.04 启动步骤。
+- `.env.example` 说明。
+- 后端命令：venv、pip install、alembic upgrade、uvicorn。
+- 前端命令：npm install、npm run dev。
+- 测试命令：pytest。
+- “已实现功能”。
+- “限制与后续替换点”。
+- “OpenAI API 使用位置”。
+- “强排算法说明”。
+
+# 13. 代码质量
+- 不要提交真实 API Key。
+- 坐标单位统一为米。
+- 不要让 LLM 直接生成最终楼栋坐标。
+- 所有指标必须由本地公式计算。
+- 错误响应要清晰。
+- 先实现能跑通的最小闭环，再补测试并修复失败。

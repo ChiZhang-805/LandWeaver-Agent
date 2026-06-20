@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SiteOption",
+  "type": "object",
+  "required": ["strategy", "parcel_id", "buildings", "metrics", "violations", "risk_flags", "score", "seed"],
+  "properties": {
+    "id": {"type": "string"},
+    "strategy": {"enum": ["revenue_first", "balanced", "low_risk"]},
+    "parcel_id": {"type": "string"},
+    "buildings": {"type": "array"},
+    "metrics": {"type": "object"},
+    "violations": {"type": "array", "items": {"type": "string"}},
+    "risk_flags": {"type": "array", "items": {"type": "string"}},
+    "score": {"type": "number"},
+    "seed": {"type": "integer"},
+    "buildable_envelope": {"type": "array"}
+  }
+}
+

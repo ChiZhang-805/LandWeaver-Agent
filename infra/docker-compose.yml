@@ -1,0 +1,32 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: landweaver-postgis
+    environment:
+      POSTGRES_DB: landweaver
+      POSTGRES_USER: landweaver
+      POSTGRES_PASSWORD: landweaver
+    ports:
+      - "5432:5432"
+    volumes:
+      - landweaver-postgis-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U landweaver -d landweaver"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    container_name: landweaver-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  landweaver-postgis-data:
+

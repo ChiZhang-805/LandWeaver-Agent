@@ -1,0 +1,12 @@
+{
+  "type": "tower",
+  "footprint_width_m": 20,
+  "footprint_depth_m": 18,
+  "floors_min": 16,
+  "floors_max": 24,
+  "typical_floor_gfa_m2": 360,
+  "units_per_floor": 4,
+  "avg_unit_area_m2": 90,
+  "height_per_floor_m": 3.0
+}
+

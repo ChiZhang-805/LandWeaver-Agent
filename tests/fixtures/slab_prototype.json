@@ -1,0 +1,12 @@
+{
+  "type": "slab",
+  "footprint_width_m": 42,
+  "footprint_depth_m": 14,
+  "floors_min": 8,
+  "floors_max": 11,
+  "typical_floor_gfa_m2": 560,
+  "units_per_floor": 6,
+  "avg_unit_area_m2": 93,
+  "height_per_floor_m": 3.0
+}
+

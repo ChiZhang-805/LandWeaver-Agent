@@ -1,0 +1,19 @@
+{
+  "far_max": 2.5,
+  "building_density_max": 0.28,
+  "green_ratio_min": 0.3,
+  "height_limit_m": 80,
+  "setbacks_m": {"north": 10, "south": 10, "east": 8, "west": 8},
+  "min_spacing_m": 18,
+  "parking_ratio_per_unit": 1.1,
+  "saleable_ratio": 0.82,
+  "assumptions": {
+    "avg_selling_price_cny_per_m2": 32000,
+    "hard_cost_cny_per_m2": 5200,
+    "land_cost_cny": 120000000,
+    "soft_cost_ratio": 0.12,
+    "tax_ratio": 0.09,
+    "marketing_ratio": 0.03
+  }
+}
+

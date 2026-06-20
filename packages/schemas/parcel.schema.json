@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Parcel",
+  "type": "object",
+  "required": ["project_id", "unit", "boundary", "area_m2", "source"],
+  "properties": {
+    "id": {"type": "string"},
+    "project_id": {"type": "string"},
+    "unit": {"const": "m"},
+    "boundary": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "array",
+        "prefixItems": [{"type": "number"}, {"type": "number"}],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "north_angle_deg": {"type": "number"},
+    "area_m2": {"type": "number", "exclusiveMinimum": 0},
+    "source": {"enum": ["manual", "geojson", "dxf_placeholder"]}
+  }
+}
+

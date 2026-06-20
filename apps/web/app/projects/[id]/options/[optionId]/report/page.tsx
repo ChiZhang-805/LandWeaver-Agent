@@ -1,0 +1,130 @@
+"use client";
+
+import { Download, Printer, RefreshCcw } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { MetricGrid } from "@/components/MetricGrid";
+import { OptionCanvas } from "@/components/OptionCanvas";
+import { Shell } from "@/components/Shell";
+import { StatusPill } from "@/components/StatusPill";
+import { buildDownloadUrl, createOptionReport, explainOption, getOption, getProject, getSensitivity } from "@/lib/api";
+import type { Parcel, Project, SensitivityScenario, SiteOption } from "@/lib/types";
+
+function money(value: number) {
+  if (Math.abs(value) >= 100000000) return `${(value / 100000000).toFixed(2)}亿`;
+  if (Math.abs(value) >= 10000) return `${(value / 10000).toFixed(1)}万`;
+  return value.toLocaleString("zh-CN", { maximumFractionDigits: 0 });
+}
+
+export default function OptionReportPage() {
+  const params = useParams<{ id: string; optionId: string }>();
+  const projectId = params.id;
+  const optionId = params.optionId;
+  const [project, setProject] = useState<Project | null>(null);
+  const [parcel, setParcel] = useState<Parcel | null>(null);
+  const [option, setOption] = useState<SiteOption | null>(null);
+  const [sensitivity, setSensitivity] = useState<SensitivityScenario[]>([]);
+  const [explanation, setExplanation] = useState("");
+  const [status, setStatus] = useState("");
+
+  const load = useCallback(async () => {
+    try {
+      setStatus("");
+      const [aggregate, detail, sensitivityRows, explain] = await Promise.all([
+        getProject(projectId),
+        getOption(optionId),
+        getSensitivity(optionId),
+        explainOption(optionId)
+      ]);
+      setProject(aggregate.project);
+      setParcel(aggregate.parcel);
+      setOption(detail);
+      setSensitivity(sensitivityRows.scenarios);
+      setExplanation(explain.explanation);
+    } catch (event) {
+      setStatus(event instanceof Error ? event.message : "报告加载失败");
+    }
+  }, [optionId, projectId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function downloadHtml() {
+    try {
+      const result = await createOptionReport(optionId);
+      window.open(buildDownloadUrl(result.download_path), "_blank", "noopener,noreferrer");
+      setStatus(`报告已生成：${result.local_path}`);
+    } catch (event) {
+      setStatus(event instanceof Error ? event.message : "报告生成失败");
+    }
+  }
+
+  return (
+    <Shell projectId={projectId}>
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
+        <div>
+          <p className="page-kicker">REPORT</p>
+          <h1 className="page-title mt-2">方案报告</h1>
+          <p className="page-copy mt-2">{project && option ? `${project.title} · ${option.strategy}` : "报告数据加载中"}</p>
+        </div>
+        <div className="flex gap-2">
+          <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
+            <RefreshCcw size={16} aria-hidden />
+          </button>
+          <button title="打印" className="icon-button border border-line bg-white" onClick={() => window.print()}>
+            <Printer size={16} aria-hidden />
+          </button>
+          <button title="下载 HTML 报告" className="icon-button bg-teal text-white" onClick={downloadHtml}>
+            <Download size={16} aria-hidden />
+            <span>HTML</span>
+          </button>
+        </div>
+      </div>
+      {option && project ? (
+        <article className="panel grid gap-6 p-6 print:border-0 print:p-0 print:shadow-none">
+          <header>
+            <p className="text-sm font-semibold text-teal">LANDWEAVER OPTION REPORT</p>
+            <h2 className="mt-2 text-3xl font-black text-ink">{project.title}</h2>
+            <p className="mt-2 text-sm text-slate-600">{project.city} · {option.strategy} · {parcel?.area_m2.toLocaleString("zh-CN")} m2</p>
+          </header>
+          <MetricGrid metrics={option.metrics} />
+          <OptionCanvas parcel={parcel} option={option} />
+          <section className="grid gap-3 md:grid-cols-2">
+            <div>
+              <h3 className="font-semibold">风险提示</h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {option.risk_flags.length ? option.risk_flags.map((item) => <StatusPill key={item} tone="warn">{item}</StatusPill>) : <StatusPill tone="ok">暂无风险</StatusPill>}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-semibold">AI 说明</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{explanation}</p>
+            </div>
+          </section>
+          <section className="overflow-auto">
+            <h3 className="mb-3 font-semibold">敏感性</h3>
+            <table className="data-table min-w-[680px]">
+              <thead>
+                <tr><th className="px-4 py-3">变量</th><th className="px-4 py-3">扰动</th><th className="px-4 py-3">毛利率</th><th className="px-4 py-3">毛利</th></tr>
+              </thead>
+              <tbody>
+                {sensitivity.map((item, index) => (
+                  <tr key={`${item.variable}-${index}`} className="border-t border-line">
+                    <td className="px-4 py-3">{item.variable === "avg_selling_price_cny_per_m2" ? "售价" : "建安成本"}</td>
+                    <td className="px-4 py-3">{(item.delta * 100).toFixed(0)}%</td>
+                    <td className="px-4 py-3">{(item.gross_margin_ratio * 100).toFixed(1)}%</td>
+                    <td className="px-4 py-3">{money(item.gross_margin_cny)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </article>
+      ) : (
+        <div className="panel p-5 text-sm text-slate-600">加载中</div>
+      )}
+      {status ? <p className={`mt-3 status-message print:hidden ${status.includes("失败") || status.includes("not") || status.includes("Not") ? "danger-message" : ""}`}>{status}</p> : null}
+    </Shell>
+  );
+}
