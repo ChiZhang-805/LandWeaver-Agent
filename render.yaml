@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: landweaver-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: PYTHONPATH=apps/api:. uvicorn app.main:app --app-dir apps/api --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+  - type: web
+    name: landweaver-web
+    runtime: node
+    plan: free
+    rootDir: apps/web
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
+      - key: LANDWEAVER_API_HOSTPORT
+        fromService:
+          type: web
+          name: landweaver-api
+          property: hostport

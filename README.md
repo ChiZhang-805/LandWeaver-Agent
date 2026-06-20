@@ -65,6 +65,23 @@ LANDWEAVER_API_BASE_URL=http://127.0.0.1:8000 npm run dev -- --hostname 0.0.0.0 
 
 `NEXT_PUBLIC_API_BASE_URL` 只在需要浏览器直连后端时设置；默认留空可避免跨端口 CORS 和本机 8000 端口冲突。
 
+## Render Blueprint 部署
+
+本仓库根目录包含 `render.yaml`，可用 Render Blueprint 一键创建两个 public web services：
+
+- `landweaver-api`：FastAPI 后端，健康检查 `/health`。
+- `landweaver-web`：Next.js 前端，面向用户公开访问；前端通过 Render 内网代理 `/api/*` 和 `/exports/*` 到后端。
+
+一键部署链接：
+
+```text
+https://render.com/deploy?repo=https://github.com/ChiZhang-805/LandWeaver-Agent
+```
+
+部署完成后，把 `landweaver-web` 的 `https://...onrender.com` 地址分享给用户即可。默认无 `OPENAI_API_KEY` 时会走 deterministic mock；如果要使用真实模型，在 Render Dashboard 里给 `landweaver-api` 添加 `OPENAI_API_KEY` 等环境变量后重新部署。
+
+注意：当前 Blueprint 使用 Render free plan 和 JSON/文件落盘仓储，适合公开 demo。免费服务可能休眠，且重启/重新部署后项目数据和导出文件不保证长期保留；生产版应改接 Render Postgres/PostGIS、对象存储和正式异步队列。
+
 ## 测试
 
 ```bash
