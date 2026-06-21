@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from copy import deepcopy
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 
-from app.core.config import clear_openai_runtime_settings, get_openai_runtime_settings, get_settings, save_openai_runtime_settings
+from app.core.config import (
+    clear_openai_runtime_settings,
+    get_openai_runtime_settings,
+    get_settings,
+    reset_request_openai_overrides,
+    save_openai_runtime_settings,
+    set_request_openai_overrides,
+)
 from app.db.memory import STORE
 from app.schemas.domain import (
     BuildingPrototype,
@@ -49,7 +57,20 @@ from engines.importers import parse_dxf_polyline
 from engines.profit import calculate_profit, calculate_sensitivity
 from engines.report import render_option_report
 
-router = APIRouter(prefix="/api", tags=["LandWeaver"])
+
+async def _openai_request_context(
+    x_openai_api_key: Annotated[str | None, Header(alias="X-OpenAI-API-Key")] = None,
+    x_openai_model_text: Annotated[str | None, Header(alias="X-OpenAI-Model-Text")] = None,
+    x_openai_model_fast: Annotated[str | None, Header(alias="X-OpenAI-Model-Fast")] = None,
+) -> AsyncGenerator[None, None]:
+    tokens = set_request_openai_overrides(x_openai_api_key, x_openai_model_text, x_openai_model_fast)
+    try:
+        yield
+    finally:
+        reset_request_openai_overrides(tokens)
+
+
+router = APIRouter(prefix="/api", tags=["LandWeaver"], dependencies=[Depends(_openai_request_context)])
 
 
 @router.get("/settings/openai", response_model=OpenAISettingsStatus)

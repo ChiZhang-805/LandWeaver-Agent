@@ -295,7 +295,7 @@ export type ProjectAggregate = {
 
 export type OpenAISettingsStatus = {
   configured: boolean;
-  source: "web" | "env" | "mock";
+  source: "browser" | "web" | "env" | "mock";
   masked_key: string | null;
   model_text: string;
   model_fast: string;

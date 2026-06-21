@@ -4,10 +4,11 @@ import { Eye, EyeOff, KeyRound, RefreshCcw, Save, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
-import { clearOpenAISettings, getOpenAISettings, saveOpenAISettings } from "@/lib/api";
+import { clearOpenAISettings, getOpenAISettings, getStoredOpenAISettings, saveOpenAISettings } from "@/lib/api";
 import type { OpenAISettingsStatus } from "@/lib/types";
 
 function sourceLabel(source?: OpenAISettingsStatus["source"]) {
+  if (source === "browser") return "本浏览器";
   if (source === "web") return "网页设置";
   if (source === "env") return "环境变量";
   return "Mock";
@@ -25,9 +26,10 @@ export default function SettingsPage() {
     try {
       setStatus("");
       const next = await getOpenAISettings();
+      const stored = getStoredOpenAISettings();
       setSettings(next);
-      setModelText(next.model_text);
-      setModelFast(next.model_fast);
+      setModelText(stored.modelText || next.model_text);
+      setModelFast(stored.modelFast || next.model_fast);
       setApiKey("");
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "加载失败");
@@ -49,21 +51,21 @@ export default function SettingsPage() {
       setSettings(next);
       setApiKey("");
       setShowKey(false);
-      setStatus("OpenAI 设置已保存");
+      setStatus("OpenAI 设置已保存到当前浏览器");
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "保存失败");
     }
   }
 
   async function clear() {
-    if (!window.confirm("清除网页保存的 OpenAI API Key？")) return;
+    if (!window.confirm("清除当前浏览器保存的 OpenAI API Key？")) return;
     try {
       const next = await clearOpenAISettings();
       setSettings(next);
       setApiKey("");
       setModelText(next.model_text);
       setModelFast(next.model_fast);
-      setStatus("网页保存的 OpenAI 设置已清除");
+      setStatus("当前浏览器保存的 OpenAI 设置已清除");
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "清除失败");
     }
@@ -75,7 +77,7 @@ export default function SettingsPage() {
         <div>
           <p className="page-kicker">SETTINGS</p>
           <h1 className="page-title mt-2">OpenAI 设置</h1>
-          <p className="page-copy mt-2">模型、密钥和当前来源。</p>
+          <p className="page-copy mt-2">模型、密钥和当前来源；Key 只保存在当前浏览器。</p>
         </div>
         <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
           <RefreshCcw size={16} aria-hidden />
@@ -150,13 +152,16 @@ export default function SettingsPage() {
             <div className="flex flex-wrap gap-2">
               <button title="保存 OpenAI 设置" className="icon-button bg-teal text-white" onClick={save}>
                 <Save size={16} aria-hidden />
-                <span>保存</span>
+                <span>保存到本浏览器</span>
               </button>
-              <button title="清除网页设置" className="icon-button border border-line bg-white text-rose" onClick={clear}>
+              <button title="清除浏览器设置" className="icon-button border border-line bg-white text-rose" onClick={clear}>
                 <Trash2 size={16} aria-hidden />
                 <span>清除</span>
               </button>
             </div>
+            <p className="text-xs leading-5 text-slate-500">
+              API Key 不会写入 Render 或后端文件；当前浏览器会在调用简报解析、方案解释和视觉设计时通过请求头临时发送。
+            </p>
           </div>
         </div>
       </div>

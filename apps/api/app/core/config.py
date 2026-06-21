@@ -2,10 +2,34 @@ from __future__ import annotations
 
 import os
 import json
+from contextvars import ContextVar, Token
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel
+
+
+_request_openai_api_key: ContextVar[str | None] = ContextVar("request_openai_api_key", default=None)
+_request_openai_model_text: ContextVar[str | None] = ContextVar("request_openai_model_text", default=None)
+_request_openai_model_fast: ContextVar[str | None] = ContextVar("request_openai_model_fast", default=None)
+
+
+def set_request_openai_overrides(
+    api_key: str | None,
+    model_text: str | None,
+    model_fast: str | None,
+) -> tuple[Token[str | None], Token[str | None], Token[str | None]]:
+    return (
+        _request_openai_api_key.set(api_key.strip() if api_key and api_key.strip() else None),
+        _request_openai_model_text.set(model_text.strip() if model_text and model_text.strip() else None),
+        _request_openai_model_fast.set(model_fast.strip() if model_fast and model_fast.strip() else None),
+    )
+
+
+def reset_request_openai_overrides(tokens: tuple[Token[str | None], Token[str | None], Token[str | None]]) -> None:
+    _request_openai_api_key.reset(tokens[0])
+    _request_openai_model_text.reset(tokens[1])
+    _request_openai_model_fast.reset(tokens[2])
 
 
 class Settings(BaseModel):
@@ -73,10 +97,11 @@ def _read_openai_runtime_settings() -> dict:
 def get_openai_runtime_settings() -> dict:
     settings = get_settings()
     runtime = _read_openai_runtime_settings()
-    api_key = str(runtime.get("api_key") or settings.openai_api_key or "").strip() or None
-    model_text = str(runtime.get("model_text") or settings.openai_model_text).strip()
-    model_fast = str(runtime.get("model_fast") or settings.openai_model_fast).strip()
-    source = "web" if runtime.get("api_key") else "env" if settings.openai_api_key else "mock"
+    request_key = _request_openai_api_key.get()
+    api_key = str(request_key or runtime.get("api_key") or settings.openai_api_key or "").strip() or None
+    model_text = str(_request_openai_model_text.get() or runtime.get("model_text") or settings.openai_model_text).strip()
+    model_fast = str(_request_openai_model_fast.get() or runtime.get("model_fast") or settings.openai_model_fast).strip()
+    source = "browser" if request_key else "web" if runtime.get("api_key") else "env" if settings.openai_api_key else "mock"
     return {
         "api_key": api_key,
         "configured": bool(api_key),

@@ -22,9 +22,65 @@ import type {
 const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
 
 export const API_BASE = configuredApiBase ? configuredApiBase.replace(/\/$/, "") : "";
+export const OPENAI_API_KEY_STORAGE_KEY = "landweaver.openai_api_key";
+export const OPENAI_MODEL_TEXT_STORAGE_KEY = "landweaver.openai_model_text";
+export const OPENAI_MODEL_FAST_STORAGE_KEY = "landweaver.openai_model_fast";
 
 function apiUrl(path: string) {
   return `${API_BASE}${path}`;
+}
+
+export function getStoredOpenAISettings() {
+  if (typeof window === "undefined") return { apiKey: "", modelText: "", modelFast: "" };
+  try {
+    return {
+      apiKey: window.localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) ?? "",
+      modelText: window.localStorage.getItem(OPENAI_MODEL_TEXT_STORAGE_KEY) ?? "",
+      modelFast: window.localStorage.getItem(OPENAI_MODEL_FAST_STORAGE_KEY) ?? ""
+    };
+  } catch {
+    return { apiKey: "", modelText: "", modelFast: "" };
+  }
+}
+
+function setStoredValue(key: string, value: string | undefined) {
+  if (typeof window === "undefined" || value === undefined) return;
+  const cleaned = value.trim();
+  try {
+    if (cleaned) {
+      window.localStorage.setItem(key, cleaned);
+    } else {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // The app still works with env keys or mock mode when localStorage is unavailable.
+  }
+}
+
+export function saveStoredOpenAISettings(payload: { api_key?: string; model_text?: string; model_fast?: string }) {
+  setStoredValue(OPENAI_API_KEY_STORAGE_KEY, payload.api_key);
+  setStoredValue(OPENAI_MODEL_TEXT_STORAGE_KEY, payload.model_text);
+  setStoredValue(OPENAI_MODEL_FAST_STORAGE_KEY, payload.model_fast);
+}
+
+export function clearStoredOpenAISettings() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(OPENAI_API_KEY_STORAGE_KEY);
+    window.localStorage.removeItem(OPENAI_MODEL_TEXT_STORAGE_KEY);
+    window.localStorage.removeItem(OPENAI_MODEL_FAST_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures; server-side env keys or mock mode can still run.
+  }
+}
+
+function openAIHeaders(): Record<string, string> {
+  const stored = getStoredOpenAISettings();
+  return {
+    ...(stored.apiKey ? { "X-OpenAI-API-Key": stored.apiKey } : {}),
+    ...(stored.modelText ? { "X-OpenAI-Model-Text": stored.modelText } : {}),
+    ...(stored.modelFast ? { "X-OpenAI-Model-Fast": stored.modelFast } : {})
+  };
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -34,6 +90,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       ...init,
       headers: {
         "Content-Type": "application/json",
+        ...openAIHeaders(),
         ...(init?.headers || {})
       },
       cache: "no-store"
@@ -213,12 +270,11 @@ export function getOpenAISettings() {
 }
 
 export function saveOpenAISettings(payload: { api_key?: string; model_text?: string; model_fast?: string }) {
-  return request<OpenAISettingsStatus>("/api/settings/openai", {
-    method: "PUT",
-    body: JSON.stringify(payload)
-  });
+  saveStoredOpenAISettings(payload);
+  return getOpenAISettings();
 }
 
 export function clearOpenAISettings() {
-  return request<OpenAISettingsStatus>("/api/settings/openai", { method: "DELETE" });
+  clearStoredOpenAISettings();
+  return getOpenAISettings();
 }

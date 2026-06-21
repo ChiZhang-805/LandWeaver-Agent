@@ -400,7 +400,7 @@ class OpenAISettingsUpdate(BaseModel):
 
 class OpenAISettingsStatus(BaseModel):
     configured: bool
-    source: Literal["web", "env", "mock"]
+    source: Literal["browser", "web", "env", "mock"]
     masked_key: str | None = None
     model_text: str
     model_fast: str

@@ -78,7 +78,7 @@ LANDWEAVER_API_BASE_URL=http://127.0.0.1:8000 npm run dev -- --hostname 0.0.0.0 
 https://render.com/deploy?repo=https://github.com/ChiZhang-805/LandWeaver-Agent
 ```
 
-部署完成后，把 `landweaver-web` 的 `https://...onrender.com` 地址分享给用户即可。默认无 `OPENAI_API_KEY` 时会走 deterministic mock；如果要使用真实模型，在 Render Dashboard 里给 `landweaver-api` 添加 `OPENAI_API_KEY` 等环境变量后重新部署。
+部署完成后，把 `landweaver-web` 的 `https://...onrender.com` 地址分享给用户即可。默认无 Key 时会走 deterministic mock；用户可以直接在网页的 **OpenAI 设置** 页填写自己的 Key。Key 只保存在当前浏览器 localStorage，并通过 `X-OpenAI-API-Key` 请求头临时发送给 API。Render Dashboard 里的 `OPENAI_API_KEY` 只是可选的站主预置方式，不是必需。
 
 注意：当前 Blueprint 使用 Render free plan 和 JSON/文件落盘仓储，适合公开 demo。免费服务可能休眠，且重启/重新部署后项目数据和导出文件不保证长期保留；生产版应改接 Render Postgres/PostGIS、对象存储和正式异步队列。
 
@@ -103,7 +103,7 @@ pytest
 
 当前验证结果：
 
-- `.venv/bin/python -m pytest -q`：14 passed。
+- `.venv/bin/python -m pytest -q`：15 passed。
 - `cd apps/web && npx tsc --noEmit`：通过；当前 `package.json` 未配置 `typecheck` 脚本。
 - `cd apps/web && npm run lint`：无警告或错误。
 - `cd apps/web && npm run build`：通过。
@@ -120,6 +120,8 @@ pytest
 - `LANDWEAVER_STORAGE_DIR`：导出文件目录。
 - `LANDWEAVER_API_BASE_URL`：Next.js `/api` 代理目标，默认 `http://127.0.0.1:8001`。
 - `NEXT_PUBLIC_API_BASE_URL`：可选浏览器直连 API 地址，默认留空。
+
+网页端 Key 入口在 `/settings`。浏览器保存的 Key 不会写入 Render 或后端文件；后端只在当前请求里读取 `X-OpenAI-API-Key`、`X-OpenAI-Model-Text` 和 `X-OpenAI-Model-Fast` 请求头。
 
 ## OpenAI API 使用位置
 

@@ -260,3 +260,31 @@ def test_dxf_parcel_import():
     parcel = parcel_resp.json()
     assert parcel["source"] == "dxf"
     assert parcel["area_m2"] == 9600
+
+
+def test_openai_settings_can_use_browser_request_header():
+    mock_resp = client.get("/api/settings/openai")
+    assert mock_resp.status_code == 200
+    mock_payload = mock_resp.json()
+    assert mock_payload["configured"] is False
+    assert mock_payload["source"] == "mock"
+
+    browser_resp = client.get(
+        "/api/settings/openai",
+        headers={
+            "X-OpenAI-API-Key": "sk-test-landweaver-browser-key",
+            "X-OpenAI-Model-Text": "gpt-test-text",
+            "X-OpenAI-Model-Fast": "gpt-test-fast",
+        },
+    )
+    assert browser_resp.status_code == 200
+    browser_payload = browser_resp.json()
+    assert browser_payload["configured"] is True
+    assert browser_payload["source"] == "browser"
+    assert browser_payload["masked_key"] == "sk-test...-key"
+    assert browser_payload["model_text"] == "gpt-test-text"
+    assert browser_payload["model_fast"] == "gpt-test-fast"
+
+    after_resp = client.get("/api/settings/openai")
+    assert after_resp.status_code == 200
+    assert after_resp.json()["source"] == "mock"
