@@ -275,45 +275,12 @@ export default function ParcelPage() {
               <h2 className="section-title">坐标点</h2>
               <span className="text-xs font-semibold text-slate-500">{points.length} 点</span>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-            <table className="data-table coordinate-table w-full table-fixed">
-              <colgroup>
-                <col className="w-[42px]" />
-                <col />
-                <col />
-                <col className="w-[116px]" />
-              </colgroup>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>X</th>
-                  <th>Y</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-0">
+              <div className="grid gap-3 md:hidden">
                 {points.map(([x, y], index) => (
-                  <tr key={`${x}-${y}-${index}`}>
-                    <td className="font-bold">{index + 1}</td>
-                    <td>
-                      <input
-                        className="input-control h-9 min-h-0 w-full px-2 text-sm"
-                        type="number"
-                        step="0.1"
-                        value={x}
-                        onChange={(event) => updatePoint(index, 0, event.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="input-control h-9 min-h-0 w-full px-2 text-sm"
-                        type="number"
-                        step="0.1"
-                        value={y}
-                        onChange={(event) => updatePoint(index, 1, event.target.value)}
-                      />
-                    </td>
-                    <td>
+                  <div key={`${x}-${y}-${index}`} className="rounded-[8px] border border-line bg-white p-3">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <span className="text-sm font-black text-ink">点位 {index + 1}</span>
                       <div className="grid grid-cols-3 gap-1">
                         <button title="上移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === 0} onClick={() => movePoint(index, -1)}>
                           <ArrowUp size={14} aria-hidden />
@@ -325,12 +292,34 @@ export default function ParcelPage() {
                           <Trash2 size={14} aria-hidden />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <label className="grid gap-1 text-xs font-bold text-slate-500">
+                        X
+                        <input
+                          className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                          type="number"
+                          step="0.1"
+                          value={x}
+                          onChange={(event) => updatePoint(index, 0, event.target.value)}
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-bold text-slate-500">
+                        Y
+                        <input
+                          className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                          type="number"
+                          step="0.1"
+                          value={y}
+                          onChange={(event) => updatePoint(index, 1, event.target.value)}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 ))}
-                <tr>
-                  <td className="font-bold text-teal">+</td>
-                  <td>
+                <div className="rounded-[8px] border border-teal/30 bg-teal/5 p-3">
+                  <div className="mb-3 text-sm font-black text-teal">新增点位</div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_40px] gap-2">
                     <input
                       className="input-control h-9 min-h-0 w-full px-2 text-sm"
                       type="number"
@@ -339,8 +328,6 @@ export default function ParcelPage() {
                       value={draftPoint.x}
                       onChange={(event) => setDraftPoint((current) => ({ ...current, x: event.target.value }))}
                     />
-                  </td>
-                  <td>
                     <input
                       className="input-control h-9 min-h-0 w-full px-2 text-sm"
                       type="number"
@@ -352,15 +339,97 @@ export default function ParcelPage() {
                         if (event.key === "Enter") addPoint();
                       }}
                     />
-                  </td>
-                  <td>
-                    <button title="新增点" className="icon-button size-8 min-h-0 bg-teal p-0 text-white" onClick={addPoint}>
+                    <button title="新增点" className="icon-button size-9 min-h-0 bg-teal p-0 text-white" onClick={addPoint}>
                       <Plus size={14} aria-hidden />
                     </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+              </div>
+              <table className="data-table coordinate-table hidden w-full table-fixed md:table">
+                <colgroup>
+                  <col className="w-[42px]" />
+                  <col />
+                  <col />
+                  <col className="w-[116px]" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>X</th>
+                    <th>Y</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {points.map(([x, y], index) => (
+                    <tr key={`${x}-${y}-${index}`}>
+                      <td className="font-bold">{index + 1}</td>
+                      <td>
+                        <input
+                          className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                          type="number"
+                          step="0.1"
+                          value={x}
+                          onChange={(event) => updatePoint(index, 0, event.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                          type="number"
+                          step="0.1"
+                          value={y}
+                          onChange={(event) => updatePoint(index, 1, event.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <div className="grid grid-cols-3 gap-1">
+                          <button title="上移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === 0} onClick={() => movePoint(index, -1)}>
+                            <ArrowUp size={14} aria-hidden />
+                          </button>
+                          <button title="下移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === points.length - 1} onClick={() => movePoint(index, 1)}>
+                            <ArrowDown size={14} aria-hidden />
+                          </button>
+                          <button title="删除点" className="icon-button size-8 min-h-0 border border-line bg-white p-0 text-rose" onClick={() => removePoint(index)}>
+                            <Trash2 size={14} aria-hidden />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td className="font-bold text-teal">+</td>
+                    <td>
+                      <input
+                        className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                        type="number"
+                        step="0.1"
+                        placeholder="X"
+                        value={draftPoint.x}
+                        onChange={(event) => setDraftPoint((current) => ({ ...current, x: event.target.value }))}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        className="input-control h-9 min-h-0 w-full px-2 text-sm"
+                        type="number"
+                        step="0.1"
+                        placeholder="Y"
+                        value={draftPoint.y}
+                        onChange={(event) => setDraftPoint((current) => ({ ...current, y: event.target.value }))}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") addPoint();
+                        }}
+                      />
+                    </td>
+                    <td>
+                      <button title="新增点" className="icon-button size-8 min-h-0 bg-teal p-0 text-white" onClick={addPoint}>
+                        <Plus size={14} aria-hidden />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </aside>

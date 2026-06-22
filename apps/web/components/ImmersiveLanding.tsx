@@ -393,12 +393,12 @@ export function ImmersiveLanding() {
   }
 
   return (
-    <main className="relative min-h-[100svh] overflow-x-hidden bg-[#020713] text-white md:overflow-hidden">
+    <main className="relative h-[100svh] min-h-0 overflow-hidden bg-[#020713] text-white">
       <canvas ref={canvasRef} className="fixed inset-0 h-full w-full" aria-label="LandWeaver immersive city scene" />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(33,211,255,0.18),transparent_32%),linear-gradient(180deg,rgba(2,7,19,0.05),rgba(2,7,19,0.76))]" />
       <div className="pointer-events-none fixed inset-4 border border-cyan-100/[0.12]" />
 
-      <header className="pointer-events-auto fixed left-0 right-0 top-0 z-20 flex items-center justify-between px-6 py-5 md:px-9">
+      <header className="pointer-events-auto fixed left-0 right-0 top-0 z-20 flex min-w-0 items-center justify-between gap-3 px-4 py-4 md:px-9 md:py-5">
         <div className="flex items-center gap-3">
           <span className="flex size-9 items-center justify-center border border-cyan-200/20 bg-cyan-200/[0.08] text-cyan-100">
             <LandPlot size={18} aria-hidden />
@@ -408,30 +408,31 @@ export function ImmersiveLanding() {
             <div className="text-xs text-cyan-100/55">Agent 地织</div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 shrink-0 items-center gap-1.5 md:gap-2">
           <span className="hidden border border-cyan-100/[0.15] bg-white/5 px-3 py-2 text-xs font-semibold text-cyan-50 backdrop-blur md:inline-flex">
             LOCAL ENGINE
           </span>
           <Link
-            className="inline-flex items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-3 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12]"
+            className="inline-flex min-h-9 items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-2.5 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12] md:px-3"
             href="/projects"
           >
             <FolderOpen size={14} aria-hidden />
-            <span>项目</span>
+            <span className="hidden sm:inline">项目</span>
           </Link>
           <Link
-            className="inline-flex items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-3 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12]"
+            className="inline-flex min-h-9 items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-2.5 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12] md:px-3"
             href="/settings"
           >
             <Settings size={14} aria-hidden />
-            <span>设置</span>
+            <span className="hidden sm:inline">设置</span>
           </Link>
           <button
-            className="inline-flex items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-3 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12]"
+            type="button"
+            className="inline-flex min-h-9 items-center gap-2 border border-cyan-100/[0.15] bg-white/[0.08] px-2.5 py-2 text-xs font-semibold text-cyan-50 backdrop-blur hover:bg-white/[0.12] md:px-3"
             onClick={() => setMenuOpen((open) => !open)}
           >
             <Menu size={14} aria-hidden />
-            <span>菜单</span>
+            <span className="hidden sm:inline">菜单</span>
           </button>
           {menuOpen ? (
             <div className="absolute right-6 top-16 grid w-40 border border-cyan-100/[0.14] bg-[#021124]/[0.88] p-2 shadow-[0_20px_80px_rgba(0,0,0,0.35)] backdrop-blur-md md:right-9">
@@ -469,15 +470,15 @@ export function ImmersiveLanding() {
         </nav>
       </aside>
 
-      <section className="relative z-10 flex min-h-[100svh] items-end justify-center px-5 pb-36 pt-28 md:items-center md:pb-20">
-        <div className="mx-auto grid w-full max-w-6xl gap-7 md:grid-cols-[1fr_360px] md:items-end">
+      <section className="relative z-10 flex h-full min-h-0 items-end justify-center px-5 pb-28 pt-24 md:items-center md:pb-20 md:pt-28">
+        <div className="mx-auto grid w-full max-w-6xl gap-4 md:grid-cols-[minmax(0,1fr)_360px] md:items-end md:gap-7">
           <div className="max-w-2xl text-center md:text-left">
             <div className="mb-3 text-xs font-semibold uppercase text-cyan-200/70">{chapter.kicker}</div>
             <h1 className="text-balance text-4xl font-black uppercase leading-[0.95] text-white drop-shadow-[0_0_22px_rgba(64,224,255,0.32)] sm:text-6xl md:text-7xl">
               {chapter.title}
             </h1>
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-cyan-50/[0.62] md:mx-0">{chapter.body}</p>
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 md:justify-start">
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-cyan-50/[0.62] md:mx-0 md:mt-5">{chapter.body}</p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 md:mt-7 md:justify-start">
               <button
                 className="inline-flex min-h-11 items-center gap-2 border border-cyan-100/[0.24] bg-cyan-300/[0.12] px-5 py-3 text-sm font-bold text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.18)] backdrop-blur transition hover:bg-cyan-300/20"
                 onClick={startProject}
@@ -491,7 +492,7 @@ export function ImmersiveLanding() {
             </div>
           </div>
 
-          <div className="pointer-events-auto border border-cyan-100/[0.14] bg-[#021124]/[0.55] p-4 shadow-[0_20px_90px_rgba(0,0,0,0.28)] backdrop-blur-md">
+          <div className="pointer-events-auto border border-cyan-100/[0.14] bg-[#021124]/[0.55] p-3 shadow-[0_20px_90px_rgba(0,0,0,0.28)] backdrop-blur-md sm:p-4">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <Building2 size={17} aria-hidden />
@@ -515,7 +516,7 @@ export function ImmersiveLanding() {
                 onChange={(event) => setCity(event.target.value)}
               />
             </label>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-cyan-50/[0.68]">
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-cyan-50/[0.68] sm:mt-4">
               <div className="border border-cyan-100/10 bg-white/5 p-2">
                 <Boxes className="mx-auto mb-1" size={15} aria-hidden />
                 几何

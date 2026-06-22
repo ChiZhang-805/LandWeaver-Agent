@@ -70,54 +70,69 @@ export default function OptionsPage() {
             <div className="mt-3 grid min-h-0 flex-1 gap-4 lg:grid-cols-[0.95fr_1.05fr]">
               <OptionCanvas compact className="h-full" parcel={parcel} option={selected} />
               <div className="panel min-h-0 overflow-hidden">
-                <div className="h-full overflow-y-auto overflow-x-hidden">
-                  <table className="data-table options-table w-full table-fixed text-sm">
-                    <colgroup>
-                      <col className="w-[22%]" />
-                      <col className="w-[9%]" />
-                      <col className="w-[10%]" />
-                      <col className="w-[12%]" />
-                      <col className="w-[9%]" />
-                      <col className="w-[13%]" />
-                      <col className="w-[12%]" />
-                      <col className="w-[13%]" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th>策略</th>
-                        <th>FAR</th>
-                        <th>密度</th>
-                        <th>建面</th>
-                        <th>户数</th>
-                        <th>货值</th>
-                        <th>毛利率</th>
-                        <th>详情</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {options.map((option) => (
-                        <tr key={option.id} className={`${option.id === selected?.id ? "bg-teal/5" : ""}`} onClick={() => setSelectedId(option.id)}>
-                          <td>
-                            <div className="grid gap-1">
-                              <StatusPill tone={option.violations.length ? "risk" : option.risk_flags.length ? "warn" : "ok"}>{option.strategy}</StatusPill>
-                              <span className="text-xs font-bold text-slate-500">score {option.score.toFixed(1)}</span>
+                <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
+                  <div className="border-b border-line bg-field/70 px-4 py-3">
+                    <h2 className="section-title">候选方案</h2>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">点击卡片切换画布，右侧按钮进入详情。</p>
+                  </div>
+                  <div className="min-h-0 overflow-y-auto overflow-x-hidden p-3">
+                    <div className="grid gap-3">
+                      {options.map((option) => {
+                        const active = option.id === selected?.id;
+                        const tone = option.violations.length ? "risk" : option.risk_flags.length ? "warn" : "ok";
+                        const metrics = [
+                          ["FAR", option.metrics.far],
+                          ["密度", option.metrics.building_density],
+                          ["建面", option.metrics.total_gfa_m2],
+                          ["户数", option.metrics.units],
+                          ["货值", option.metrics.revenue_cny],
+                          ["毛利率", option.metrics.gross_margin_ratio]
+                        ] as const;
+
+                        return (
+                          <article
+                            key={option.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-pressed={active}
+                            onClick={() => setSelectedId(option.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setSelectedId(option.id);
+                              }
+                            }}
+                            className={`rounded-[8px] border bg-white p-3 text-left transition hover:border-teal/60 hover:bg-teal/5 ${
+                              active ? "border-teal shadow-[0_10px_26px_rgba(15,118,110,0.12)]" : "border-line"
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <StatusPill tone={tone}>{option.strategy}</StatusPill>
+                                <p className="mt-2 text-xs font-bold text-slate-500">score {option.score.toFixed(1)}</p>
+                              </div>
+                              <Link
+                                title="方案详情"
+                                className="icon-button size-9 min-h-0 border border-line bg-white p-0"
+                                href={`/projects/${projectId}/options/${option.id}`}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <Eye size={15} aria-hidden />
+                              </Link>
                             </div>
-                          </td>
-                          <td>{format(option.metrics.far)}</td>
-                          <td>{format(option.metrics.building_density)}</td>
-                          <td>{format(option.metrics.total_gfa_m2)}</td>
-                          <td>{format(option.metrics.units)}</td>
-                          <td>{format(option.metrics.revenue_cny)}</td>
-                          <td>{format(option.metrics.gross_margin_ratio)}</td>
-                          <td>
-                            <Link title="方案详情" className="icon-button size-9 min-h-0 border border-line bg-white p-0" href={`/projects/${projectId}/options/${option.id}`}>
-                              <Eye size={15} aria-hidden />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                              {metrics.map(([label, value]) => (
+                                <div key={label} className="rounded-[8px] border border-line bg-field px-3 py-2">
+                                  <p className="text-[11px] font-black uppercase text-slate-500">{label}</p>
+                                  <p className="mt-1 min-w-0 break-words text-sm font-black text-ink">{format(value)}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
