@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p $PORT",
     "typecheck": "next typegen && tsc --noEmit",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@types/node": "^20.17.10",
