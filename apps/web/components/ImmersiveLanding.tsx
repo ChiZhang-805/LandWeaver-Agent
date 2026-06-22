@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, Boxes, Building2, FolderOpen, LandPlot, Loader2, Menu, Settings, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, FolderOpen, LandPlot, Loader2, Menu, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { createProject, createPrototype, generateSiteOptions, saveConstraints, saveParcel } from "@/lib/api";
-import type { BuildingPrototype, ConstraintSet, Coordinate } from "@/lib/types";
+import { createProject } from "@/lib/api";
 import { useProjectStore } from "@/store/projectStore";
 
 type Chapter = {
@@ -24,7 +23,6 @@ type Chapter = {
 };
 
 type ChapterKey = "parcel" | "network" | "envelope" | "solver" | "export";
-type QuickStartTarget = "parcel" | "constraints" | "prototypes" | "generate" | "report";
 
 const chapters: Chapter[] = [
   {
@@ -33,7 +31,7 @@ const chapters: Chapter[] = [
     kicker: "LOCAL METER GRID",
     title: "LandWeaver Agent（地织）",
     body: "把一块地从红线、退界、产品到收益测算织成可比较的方案。",
-    action: "创建强排项目",
+    action: "创建项目",
     camera: new THREE.Vector3(8, 8, 14),
     lookAt: new THREE.Vector3(2, 1, -1.5),
     cubeScale: 0.65,
@@ -46,7 +44,7 @@ const chapters: Chapter[] = [
     kicker: "PROTOTYPE NETWORK",
     title: "用产品原型生成候选",
     body: "高层塔楼、板式住宅与经济假设进入同一个离散搜索空间，候选楼栋不靠猜。",
-    action: "配置产品",
+    action: "创建项目",
     camera: new THREE.Vector3(0, 9, 21),
     lookAt: new THREE.Vector3(0, 1.2, 0),
     cubeScale: 0.42,
@@ -59,7 +57,7 @@ const chapters: Chapter[] = [
     kicker: "BUILDABLE ENVELOPE",
     title: "先确定边界，再释放容量",
     body: "退界、限高、楼间距和密度被转译为本地可验证的几何范围。",
-    action: "进入约束",
+    action: "创建项目",
     camera: new THREE.Vector3(-8, 7, 16),
     lookAt: new THREE.Vector3(-0.8, 1.6, 0),
     cubeScale: 1.55,
@@ -72,7 +70,7 @@ const chapters: Chapter[] = [
     kicker: "候选方案空间",
     title: "多策略强排，同屏比较",
     body: "收益优先、均衡和低风险策略在约束内选择楼栋组合，并暴露风险提示。",
-    action: "生成方案",
+    action: "创建项目",
     camera: new THREE.Vector3(-12, 8, 11),
     lookAt: new THREE.Vector3(0, 1.2, -2),
     cubeScale: 0.18,
@@ -85,7 +83,7 @@ const chapters: Chapter[] = [
     kicker: "MEASURED OUTPUT",
     title: "测算、解释、导出到同一张图",
     body: "GeoJSON、DXF、CSV 都来自同一套本地几何与指标，方便复核和交付。",
-    action: "开始织地",
+    action: "创建项目",
     camera: new THREE.Vector3(0, 10, 13),
     lookAt: new THREE.Vector3(0, 1.7, -3),
     cubeScale: 0.08,
@@ -93,76 +91,6 @@ const chapters: Chapter[] = [
     roadOpacity: 1
   }
 ];
-
-const sampleParcel: Coordinate[] = [
-  [0, 0],
-  [120, 0],
-  [120, 80],
-  [0, 80]
-];
-
-const sampleConstraints: ConstraintSet = {
-  far_max: 2.5,
-  building_density_max: 0.28,
-  green_ratio_min: 0.3,
-  height_limit_m: 80,
-  setbacks_m: { north: 10, south: 10, east: 8, west: 8 },
-  min_spacing_m: 18,
-  parking_ratio_per_unit: 1.1,
-  saleable_ratio: 0.82,
-  assumptions: {
-    avg_selling_price_cny_per_m2: 32000,
-    hard_cost_cny_per_m2: 5200,
-    land_cost_cny: 120000000,
-    soft_cost_ratio: 0.12,
-    tax_ratio: 0.09,
-    marketing_ratio: 0.03
-  }
-};
-
-const samplePrototypes: Array<Omit<BuildingPrototype, "id">> = [
-  {
-    type: "tower",
-    footprint_width_m: 20,
-    footprint_depth_m: 18,
-    floors_min: 16,
-    floors_max: 24,
-    typical_floor_gfa_m2: 360,
-    units_per_floor: 4,
-    avg_unit_area_m2: 90,
-    height_per_floor_m: 3
-  },
-  {
-    type: "slab",
-    footprint_width_m: 42,
-    footprint_depth_m: 14,
-    floors_min: 8,
-    floors_max: 11,
-    typical_floor_gfa_m2: 560,
-    units_per_floor: 6,
-    avg_unit_area_m2: 93,
-    height_per_floor_m: 3
-  }
-];
-
-const quickStartActions: Array<{
-  key: QuickStartTarget;
-  label: string;
-  title: string;
-  icon: typeof Boxes;
-}> = [
-  { key: "parcel", label: "几何", title: "创建项目并进入红线几何编辑", icon: Boxes },
-  { key: "generate", label: "强排", title: "创建示例项目并直接生成强排方案", icon: Sparkles },
-  { key: "report", label: "导出", title: "创建示例项目并打开可下载报告", icon: ArrowRight }
-];
-
-const chapterTarget: Record<ChapterKey, QuickStartTarget> = {
-  parcel: "parcel",
-  network: "prototypes",
-  envelope: "constraints",
-  solver: "generate",
-  export: "report"
-};
 
 function setObjectOpacity(object: THREE.Object3D, opacity: number) {
   object.traverse((child) => {
@@ -368,13 +296,13 @@ export function ImmersiveLanding() {
   const [chapterIndex, setChapterIndex] = useState(0);
   const [title, setTitle] = useState("120m x 80m 住宅地块测算");
   const [city, setCity] = useState("上海");
-  const [busyTarget, setBusyTarget] = useState<QuickStartTarget | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const setCurrentProjectId = useProjectStore((state) => state.setCurrentProjectId);
   const chapter = chapters[chapterIndex];
-  const isBusy = busyTarget !== null;
+  const isBusy = busy;
   const progress = useMemo(() => ((chapterIndex + 1) / chapters.length) * 100, [chapterIndex]);
 
   useEffect(() => {
@@ -453,16 +381,8 @@ export function ImmersiveLanding() {
     return () => window.removeEventListener("wheel", handleWheel);
   }, []);
 
-  async function seedQuickProject(projectId: string) {
-    await saveParcel(projectId, { points: sampleParcel });
-    await saveConstraints(projectId, sampleConstraints);
-    for (const prototype of samplePrototypes) {
-      await createPrototype(projectId, prototype);
-    }
-  }
-
-  async function startProject(target: QuickStartTarget = "parcel") {
-    if (busyTarget) return;
+  async function startProject() {
+    if (busy) return;
     const cleanTitle = title.trim();
     const cleanCity = city.trim();
     if (!cleanTitle || !cleanCity) {
@@ -470,32 +390,15 @@ export function ImmersiveLanding() {
       return;
     }
     try {
-      setBusyTarget(target);
+      setBusy(true);
       setError("");
       const project = await createProject({ title: cleanTitle, city: cleanCity });
       setCurrentProjectId(project.id);
-
-      if (target === "parcel" || target === "constraints" || target === "prototypes") {
-        router.push(`/projects/${project.id}/${target}`);
-        return;
-      }
-
-      await seedQuickProject(project.id);
-      const job = await generateSiteOptions(project.id, true);
-      if (job.status !== "finished" || !job.result_ids.length) {
-        throw new Error(job.error || "强排没有生成可用方案，请检查示例约束。");
-      }
-
-      if (target === "generate") {
-        router.push(`/projects/${project.id}/options`);
-        return;
-      }
-
-      router.push(`/projects/${project.id}/options/${job.result_ids[0]}/report`);
+      router.push(`/projects/${project.id}/parcel`);
     } catch (event) {
       setError(event instanceof Error ? event.message : "创建失败");
     } finally {
-      setBusyTarget(null);
+      setBusy(false);
     }
   }
 
@@ -588,7 +491,7 @@ export function ImmersiveLanding() {
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3 md:mt-7 md:justify-start">
               <button
                 className="inline-flex min-h-11 items-center gap-2 border border-cyan-100/[0.24] bg-cyan-300/[0.12] px-5 py-3 text-sm font-bold text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.18)] backdrop-blur transition hover:bg-cyan-300/20"
-                onClick={() => startProject(chapterTarget[chapter.key])}
+                onClick={() => startProject()}
                 disabled={isBusy}
               >
                 {isBusy ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Sparkles size={17} aria-hidden />}
@@ -622,29 +525,18 @@ export function ImmersiveLanding() {
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
               />
-              <span className="text-[11px] leading-4 text-cyan-100/45">
-                用于报告、视觉包和尽调检索上下文；当前不会自动套用地方控规或价格库。
-              </span>
             </label>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-cyan-50/[0.68] sm:mt-4">
-              {quickStartActions.map((action) => {
-                const Icon = action.icon;
-                const active = busyTarget === action.key;
-                return (
-                  <button
-                    key={action.key}
-                    type="button"
-                    title={action.title}
-                    disabled={isBusy}
-                    onClick={() => startProject(action.key)}
-                    className="border border-cyan-100/10 bg-white/5 p-2 transition hover:border-cyan-100/35 hover:bg-cyan-200/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {active ? <Loader2 className="mx-auto mb-1 animate-spin" size={15} aria-hidden /> : <Icon className="mx-auto mb-1" size={15} aria-hidden />}
-                    {active ? "处理中" : action.label}
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              type="button"
+              title="创建项目"
+              disabled={isBusy}
+              onClick={() => startProject()}
+              className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 border border-cyan-100/10 bg-cyan-300/[0.12] px-4 py-3 text-sm font-bold text-cyan-50 transition hover:border-cyan-100/35 hover:bg-cyan-200/[0.16] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isBusy ? <Loader2 className="animate-spin" size={16} aria-hidden /> : <Sparkles size={16} aria-hidden />}
+              <span>{isBusy ? "处理中" : "创建项目"}</span>
+              <ArrowRight size={15} aria-hidden />
+            </button>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ArrowDown, ArrowUp, FileUp, Plus, Save, Square, Trash2, Undo2 } from "lucide-react";
+import { ArrowRight, FileUp, GripVertical, Plus, Save, Trash2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,6 +20,10 @@ type ParcelSnapshot = {
   points: Coordinate[];
   geojson: unknown;
   dxfText: string;
+};
+
+type UpdateOptions = {
+  recordHistory?: boolean;
 };
 
 function clonePoints(points: Coordinate[]) {
@@ -118,6 +122,7 @@ export default function ParcelPage() {
   const [geojson, setGeojson] = useState<unknown>(null);
   const [dxfText, setDxfText] = useState("");
   const [draftPoint, setDraftPoint] = useState({ x: "", y: "" });
+  const [draggedPointIndex, setDraggedPointIndex] = useState<number | null>(null);
   const [isSaved, setIsSaved] = useState(false);
   const [status, setStatus] = useState("");
 
@@ -140,13 +145,23 @@ export default function ParcelPage() {
       });
   }, [projectId]);
 
-  function updatePoints(next: Coordinate[], source: { geojson?: unknown; dxfText?: string } = {}) {
-    if (pointsEqual(points, next) && source.geojson === undefined && source.dxfText === undefined) return;
+  function pushHistorySnapshot() {
     setHistory((current) => [...current, { points: clonePoints(points), geojson, dxfText }]);
+  }
+
+  function updatePoints(next: Coordinate[], source: { geojson?: unknown; dxfText?: string } = {}, options: UpdateOptions = {}) {
+    if (pointsEqual(points, next) && source.geojson === undefined && source.dxfText === undefined) return;
+    if (options.recordHistory !== false) {
+      pushHistorySnapshot();
+    }
     setGeojson(source.geojson ?? null);
     setDxfText(source.dxfText ?? "");
     setPoints(clonePoints(next));
     setIsSaved(false);
+  }
+
+  function updateCanvasPoints(next: Coordinate[], options: UpdateOptions = {}) {
+    updatePoints(next, {}, options);
   }
 
   function undoPoints() {
@@ -186,14 +201,32 @@ export default function ParcelPage() {
     updatePoints(points.filter((_, pointIndex) => pointIndex !== index));
   }
 
-  function movePoint(index: number, direction: -1 | 1) {
-    const nextIndex = index + direction;
-    if (nextIndex < 0 || nextIndex >= points.length) return;
+  function reorderPoint(fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= points.length || toIndex >= points.length) return;
     const next = [...points];
-    const current = next[index];
-    next[index] = next[nextIndex];
-    next[nextIndex] = current;
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
     updatePoints(next);
+    setStatus("");
+  }
+
+  function handlePointDragStart(event: React.DragEvent<HTMLButtonElement>, index: number) {
+    setDraggedPointIndex(index);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(index));
+  }
+
+  function handlePointDragOver(event: React.DragEvent<HTMLElement>) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }
+
+  function handlePointDrop(event: React.DragEvent<HTMLElement>, index: number) {
+    event.preventDefault();
+    const rawIndex = event.dataTransfer.getData("text/plain");
+    const fromIndex = draggedPointIndex ?? Number(rawIndex);
+    if (Number.isFinite(fromIndex)) reorderPoint(fromIndex, index);
+    setDraggedPointIndex(null);
   }
 
   async function submit() {
@@ -242,10 +275,6 @@ export default function ParcelPage() {
           <button title={history.length ? `撤销上一步，可连续返回 ${history.length} 步` : "暂无可撤销操作"} className="icon-button border border-line bg-white" disabled={!history.length} onClick={undoPoints}>
             <Undo2 size={16} aria-hidden />
           </button>
-          <button title="插入示例地块" className="icon-button border border-line bg-white" onClick={() => updatePoints(sample)}>
-            <Square size={16} aria-hidden />
-            <span>120m x 80m</span>
-          </button>
           <button title="保存地块" className="icon-button bg-teal text-white" onClick={submit}>
             <Save size={16} aria-hidden />
             <span>保存</span>
@@ -264,7 +293,7 @@ export default function ParcelPage() {
         </div>
       </div>
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_430px]">
-        <ParcelCanvas className="h-full" points={points} onChange={updatePoints} />
+        <ParcelCanvas className="h-full" points={points} onChange={updateCanvasPoints} onEditStart={pushHistorySnapshot} />
         <aside className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4 overflow-hidden">
           <div className="panel p-4">
             <h2 className="section-title">红线概览</h2>
@@ -293,18 +322,27 @@ export default function ParcelPage() {
             <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-0">
               <div className="grid gap-3 md:hidden">
                 {points.map(([x, y], index) => (
-                  <div key={`${x}-${y}-${index}`} className="rounded-[8px] border border-line bg-white p-3">
+                  <div
+                    key={`${x}-${y}-${index}`}
+                    className={`rounded-[8px] border border-line bg-white p-3 ${draggedPointIndex === index ? "opacity-60" : ""}`}
+                    onDragOver={handlePointDragOver}
+                    onDrop={(event) => handlePointDrop(event, index)}
+                    onDragEnd={() => setDraggedPointIndex(null)}
+                  >
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <span className="text-sm font-black text-ink">点位 {index + 1}</span>
-                      <div className="grid grid-cols-3 gap-1">
-                        <button title="上移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === 0} onClick={() => movePoint(index, -1)}>
-                          <ArrowUp size={14} aria-hidden />
-                        </button>
-                        <button title="下移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === points.length - 1} onClick={() => movePoint(index, 1)}>
-                          <ArrowDown size={14} aria-hidden />
-                        </button>
+                      <div className="flex items-center justify-end gap-1">
                         <button title="删除点" className="icon-button size-8 min-h-0 border border-line bg-white p-0 text-rose" onClick={() => removePoint(index)}>
                           <Trash2 size={14} aria-hidden />
+                        </button>
+                        <button
+                          title="拖拽排序"
+                          className="icon-button size-8 min-h-0 cursor-grab border border-line bg-white p-0 active:cursor-grabbing"
+                          draggable
+                          onDragStart={(event) => handlePointDragStart(event, index)}
+                          onDragEnd={() => setDraggedPointIndex(null)}
+                        >
+                          <GripVertical size={15} aria-hidden />
                         </button>
                       </div>
                     </div>
@@ -365,7 +403,7 @@ export default function ParcelPage() {
                   <col className="w-[42px]" />
                   <col />
                   <col />
-                  <col className="w-[116px]" />
+                  <col className="w-[84px]" />
                 </colgroup>
                 <thead>
                   <tr>
@@ -377,7 +415,13 @@ export default function ParcelPage() {
                 </thead>
                 <tbody>
                   {points.map(([x, y], index) => (
-                    <tr key={`${x}-${y}-${index}`}>
+                    <tr
+                      key={`${x}-${y}-${index}`}
+                      className={draggedPointIndex === index ? "opacity-60" : ""}
+                      onDragOver={handlePointDragOver}
+                      onDrop={(event) => handlePointDrop(event, index)}
+                      onDragEnd={() => setDraggedPointIndex(null)}
+                    >
                       <td className="font-bold">{index + 1}</td>
                       <td>
                         <input
@@ -398,15 +442,18 @@ export default function ParcelPage() {
                         />
                       </td>
                       <td>
-                        <div className="grid grid-cols-3 gap-1">
-                          <button title="上移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === 0} onClick={() => movePoint(index, -1)}>
-                            <ArrowUp size={14} aria-hidden />
-                          </button>
-                          <button title="下移" className="icon-button size-8 min-h-0 border border-line bg-white p-0" disabled={index === points.length - 1} onClick={() => movePoint(index, 1)}>
-                            <ArrowDown size={14} aria-hidden />
-                          </button>
+                        <div className="flex justify-end gap-1">
                           <button title="删除点" className="icon-button size-8 min-h-0 border border-line bg-white p-0 text-rose" onClick={() => removePoint(index)}>
                             <Trash2 size={14} aria-hidden />
+                          </button>
+                          <button
+                            title="拖拽排序"
+                            className="icon-button size-8 min-h-0 cursor-grab border border-line bg-white p-0 active:cursor-grabbing"
+                            draggable
+                            onDragStart={(event) => handlePointDragStart(event, index)}
+                            onDragEnd={() => setDraggedPointIndex(null)}
+                          >
+                            <GripVertical size={15} aria-hidden />
                           </button>
                         </div>
                       </td>

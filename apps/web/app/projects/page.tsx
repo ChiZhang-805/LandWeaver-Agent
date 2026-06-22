@@ -2,6 +2,7 @@
 
 import { Archive, Copy, FolderOpen, Plus, RefreshCcw, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
@@ -22,6 +23,7 @@ export default function ProjectsPage() {
   const [city, setCity] = useState("上海");
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
+  const router = useRouter();
 
   async function load() {
     try {
@@ -78,7 +80,7 @@ export default function ProjectsPage() {
     try {
       const project = await createProject({ title: title.trim(), city: city.trim() });
       setProjects((current) => [project, ...current]);
-      setStatus(`已创建 ${project.title}`);
+      router.push(`/projects/${project.id}/parcel`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
     }
@@ -132,13 +134,10 @@ export default function ProjectsPage() {
             <label className="grid gap-1.5 text-sm font-semibold">
               <span className="text-xs text-slate-500">城市</span>
               <input className="input-control" value={city} onChange={(event) => setCity(event.target.value)} />
-              <span className="text-xs font-medium leading-5 text-slate-500">
-                用于报告、尽调检索和视觉包上下文。
-              </span>
             </label>
             <button title="创建项目" className="icon-button self-end bg-teal text-white" onClick={createFromDashboard}>
               <Plus size={16} aria-hidden />
-              <span>创建</span>
+              <span>创建项目</span>
             </button>
           </div>
         </div>

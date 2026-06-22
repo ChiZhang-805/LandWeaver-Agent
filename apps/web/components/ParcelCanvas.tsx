@@ -1,7 +1,7 @@
 "use client";
 
 import { Eraser, SquareMousePointer, ZoomIn, ZoomOut } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Coordinate } from "@/lib/types";
 
 type CanvasBounds = {
@@ -38,25 +38,70 @@ function canvasBounds(zoom: number): CanvasBounds {
 export function ParcelCanvas({
   points,
   onChange,
+  onEditStart,
   className = ""
 }: {
   points: Coordinate[];
-  onChange: (points: Coordinate[]) => void;
+  onChange: (points: Coordinate[], options?: { recordHistory?: boolean }) => void;
+  onEditStart?: () => void;
   className?: string;
 }) {
   const [zoom, setZoom] = useState(MIN_ZOOM);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
 
-  function handleClick(event: React.MouseEvent<SVGSVGElement>) {
+  function canvasPoint(event: React.PointerEvent<SVGSVGElement>) {
     const svg = event.currentTarget;
     const matrix = svg.getScreenCTM();
-    if (!matrix) return;
+    if (!matrix) return null;
 
     const cursor = svg.createSVGPoint();
     cursor.x = event.clientX;
     cursor.y = event.clientY;
-    const { x, y } = cursor.matrixTransform(matrix.inverse());
+    return cursor.matrixTransform(matrix.inverse());
+  }
 
-    onChange([...points, [Number(x.toFixed(1)), Number(y.toFixed(1))]]);
+  function addPoint(event: React.PointerEvent<SVGSVGElement>) {
+    if (dragIndexRef.current !== null) return;
+    const point = canvasPoint(event);
+    if (!point) return;
+
+    onChange([...points, [Number(point.x.toFixed(1)), Number(point.y.toFixed(1))]]);
+  }
+
+  function startPointDrag(event: React.PointerEvent<SVGGElement>, index: number) {
+    event.preventDefault();
+    event.stopPropagation();
+    const svg = event.currentTarget.ownerSVGElement;
+    dragIndexRef.current = index;
+    activePointerIdRef.current = event.pointerId;
+    setDragIndex(index);
+    onEditStart?.();
+    svg?.setPointerCapture(event.pointerId);
+  }
+
+  function dragPoint(event: React.PointerEvent<SVGSVGElement>) {
+    const index = dragIndexRef.current;
+    if (index === null) return;
+    event.preventDefault();
+    const point = canvasPoint(event);
+    if (!point) return;
+
+    const next = points.map((item, pointIndex) =>
+      pointIndex === index ? ([Number(point.x.toFixed(1)), Number(point.y.toFixed(1))] as Coordinate) : item
+    );
+    onChange(next, { recordHistory: false });
+  }
+
+  function stopPointDrag(event: React.PointerEvent<SVGSVGElement>) {
+    const pointerId = activePointerIdRef.current;
+    if (pointerId !== null && event.currentTarget.hasPointerCapture(pointerId)) {
+      event.currentTarget.releasePointerCapture(pointerId);
+    }
+    dragIndexRef.current = null;
+    activePointerIdRef.current = null;
+    setDragIndex(null);
   }
 
   const viewBox = canvasBounds(zoom);
@@ -94,9 +139,13 @@ export function ParcelCanvas({
         </div>
       </div>
       <svg
-        className="block min-h-0 w-full flex-1 cursor-crosshair bg-white"
+        className={`block min-h-0 w-full flex-1 bg-white ${dragIndex === null ? "cursor-crosshair" : "cursor-grabbing"}`}
         viewBox={`${viewBox.minX} ${viewBox.minY} ${viewBox.width} ${viewBox.height}`}
-        onClick={handleClick}
+        onPointerDown={addPoint}
+        onPointerMove={dragPoint}
+        onPointerUp={stopPointDrag}
+        onPointerCancel={stopPointDrag}
+        style={{ touchAction: "none" }}
         role="img"
       >
         <defs>
@@ -108,8 +157,12 @@ export function ParcelCanvas({
         {points.length >= 2 ? <polyline points={pointsToString(points)} fill="none" stroke="#0f766e" strokeWidth="1.5" /> : null}
         {points.length >= 3 ? <polygon points={pointsToString(points)} fill="#0f766e22" stroke="#0f766e" strokeWidth="1.8" /> : null}
         {points.map(([x, y], index) => (
-          <g key={`${x}-${y}-${index}`}>
-            <circle cx={x} cy={y} r="2.2" fill="#17202a" />
+          <g
+            key={`${x}-${y}-${index}`}
+            className={dragIndex === index ? "cursor-grabbing" : "cursor-grab"}
+            onPointerDown={(event) => startPointDrag(event, index)}
+          >
+            <circle cx={x} cy={y} r={dragIndex === index ? "2.8" : "2.2"} fill="#17202a" />
             <text x={x + 2.8} y={y - 2.8} fontSize="4" fill="#17202a">
               {index + 1}
             </text>
