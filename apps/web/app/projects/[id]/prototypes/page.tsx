@@ -137,7 +137,6 @@ export default function PrototypesPage() {
       setStatus("");
       const prototype = await createPrototype(projectId, payload);
       setItems((current) => [...current, prototype]);
-      setStatus(`已保存${prototypeLabel(prototype.type)}`);
       return prototype;
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
@@ -161,7 +160,6 @@ export default function PrototypesPage() {
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setEditingId("");
         setDraftDirty(false);
-        setStatus(`已保存${prototypeLabel(updated.type)}`);
       }
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -177,7 +175,6 @@ export default function PrototypesPage() {
       await deletePrototype(projectId, item.id);
       setItems((current) => current.filter((candidate) => candidate.id !== item.id));
       if (editingId === item.id) setEditingId("");
-      setStatus(`已删除${prototypeLabel(item.type)}`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "删除失败");
     } finally {
