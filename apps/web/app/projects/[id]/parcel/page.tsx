@@ -129,8 +129,11 @@ export default function ParcelPage() {
           setDxfText("");
         }
         setHistory([]);
+        setStatus("");
       })
-      .catch(() => undefined);
+      .catch((event) => {
+        setStatus(event instanceof Error ? `地块加载失败：${event.message}` : "地块加载失败");
+      });
   }, [projectId]);
 
   function updatePoints(next: Coordinate[], source: { geojson?: unknown; dxfText?: string } = {}) {

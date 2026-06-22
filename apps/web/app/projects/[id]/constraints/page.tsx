@@ -38,8 +38,11 @@ export default function ConstraintsPage() {
     getProject(projectId)
       .then((aggregate) => {
         if (aggregate.constraints) setForm(aggregate.constraints);
+        setStatus("");
       })
-      .catch(() => undefined);
+      .catch((event) => {
+        setStatus(event instanceof Error ? `约束加载失败：${event.message}` : "约束加载失败");
+      });
   }, [projectId]);
 
   function update(path: string, value: string) {

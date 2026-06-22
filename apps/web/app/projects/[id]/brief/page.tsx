@@ -22,8 +22,11 @@ export default function BriefPage() {
     getProject(projectId)
       .then((aggregate) => {
         if (aggregate.brief) setBrief(aggregate.brief);
+        setStatus("");
       })
-      .catch(() => undefined);
+      .catch((event) => {
+        setStatus(event instanceof Error ? `简报加载失败：${event.message}` : "简报加载失败");
+      });
   }, [projectId]);
 
   async function submit() {
