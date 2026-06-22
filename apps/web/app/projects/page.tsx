@@ -19,7 +19,7 @@ function statusLabel(status: string) {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [title, setTitle] = useState("120m x 80m 住宅地块测算");
-  const [city, setCity] = useState("Shanghai");
+  const [city, setCity] = useState("上海");
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
 
@@ -124,7 +124,7 @@ export default function ProjectsPage() {
             <h2 className="section-title">快速项目</h2>
             {latest ? <span className="text-xs font-semibold text-slate-500">最近：{latest.city}</span> : null}
           </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto]">
+          <div className="grid gap-3 sm:grid-cols-[1fr_220px_auto]">
             <label className="grid gap-1.5 text-sm font-semibold">
               <span className="text-xs text-slate-500">项目名称</span>
               <input className="input-control" value={title} onChange={(event) => setTitle(event.target.value)} />
@@ -132,6 +132,9 @@ export default function ProjectsPage() {
             <label className="grid gap-1.5 text-sm font-semibold">
               <span className="text-xs text-slate-500">城市</span>
               <input className="input-control" value={city} onChange={(event) => setCity(event.target.value)} />
+              <span className="text-xs font-medium leading-5 text-slate-500">
+                用于报告、尽调检索和视觉包上下文。
+              </span>
             </label>
             <button title="创建项目" className="icon-button self-end bg-teal text-white" onClick={createFromDashboard}>
               <Plus size={16} aria-hidden />

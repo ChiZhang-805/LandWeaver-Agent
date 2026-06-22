@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { createProject } from "@/lib/api";
+import { createProject, createPrototype, generateSiteOptions, saveConstraints, saveParcel } from "@/lib/api";
+import type { BuildingPrototype, ConstraintSet, Coordinate } from "@/lib/types";
 import { useProjectStore } from "@/store/projectStore";
 
 type Chapter = {
-  key: string;
+  key: ChapterKey;
   label: string;
   kicker: string;
   title: string;
@@ -21,6 +22,9 @@ type Chapter = {
   cityScale: number;
   roadOpacity: number;
 };
+
+type ChapterKey = "parcel" | "network" | "envelope" | "solver" | "export";
+type QuickStartTarget = "parcel" | "constraints" | "prototypes" | "generate" | "report";
 
 const chapters: Chapter[] = [
   {
@@ -89,6 +93,76 @@ const chapters: Chapter[] = [
     roadOpacity: 1
   }
 ];
+
+const sampleParcel: Coordinate[] = [
+  [0, 0],
+  [120, 0],
+  [120, 80],
+  [0, 80]
+];
+
+const sampleConstraints: ConstraintSet = {
+  far_max: 2.5,
+  building_density_max: 0.28,
+  green_ratio_min: 0.3,
+  height_limit_m: 80,
+  setbacks_m: { north: 10, south: 10, east: 8, west: 8 },
+  min_spacing_m: 18,
+  parking_ratio_per_unit: 1.1,
+  saleable_ratio: 0.82,
+  assumptions: {
+    avg_selling_price_cny_per_m2: 32000,
+    hard_cost_cny_per_m2: 5200,
+    land_cost_cny: 120000000,
+    soft_cost_ratio: 0.12,
+    tax_ratio: 0.09,
+    marketing_ratio: 0.03
+  }
+};
+
+const samplePrototypes: Array<Omit<BuildingPrototype, "id">> = [
+  {
+    type: "tower",
+    footprint_width_m: 20,
+    footprint_depth_m: 18,
+    floors_min: 16,
+    floors_max: 24,
+    typical_floor_gfa_m2: 360,
+    units_per_floor: 4,
+    avg_unit_area_m2: 90,
+    height_per_floor_m: 3
+  },
+  {
+    type: "slab",
+    footprint_width_m: 42,
+    footprint_depth_m: 14,
+    floors_min: 8,
+    floors_max: 11,
+    typical_floor_gfa_m2: 560,
+    units_per_floor: 6,
+    avg_unit_area_m2: 93,
+    height_per_floor_m: 3
+  }
+];
+
+const quickStartActions: Array<{
+  key: QuickStartTarget;
+  label: string;
+  title: string;
+  icon: typeof Boxes;
+}> = [
+  { key: "parcel", label: "几何", title: "创建项目并进入红线几何编辑", icon: Boxes },
+  { key: "generate", label: "强排", title: "创建示例项目并直接生成强排方案", icon: Sparkles },
+  { key: "report", label: "导出", title: "创建示例项目并打开可下载报告", icon: ArrowRight }
+];
+
+const chapterTarget: Record<ChapterKey, QuickStartTarget> = {
+  parcel: "parcel",
+  network: "prototypes",
+  envelope: "constraints",
+  solver: "generate",
+  export: "report"
+};
 
 function setObjectOpacity(object: THREE.Object3D, opacity: number) {
   object.traverse((child) => {
@@ -293,13 +367,14 @@ export function ImmersiveLanding() {
   const wheelLockRef = useRef(false);
   const [chapterIndex, setChapterIndex] = useState(0);
   const [title, setTitle] = useState("120m x 80m 住宅地块测算");
-  const [city, setCity] = useState("Shanghai");
-  const [busy, setBusy] = useState(false);
+  const [city, setCity] = useState("上海");
+  const [busyTarget, setBusyTarget] = useState<QuickStartTarget | null>(null);
   const [error, setError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const router = useRouter();
   const setCurrentProjectId = useProjectStore((state) => state.setCurrentProjectId);
   const chapter = chapters[chapterIndex];
+  const isBusy = busyTarget !== null;
   const progress = useMemo(() => ((chapterIndex + 1) / chapters.length) * 100, [chapterIndex]);
 
   useEffect(() => {
@@ -378,17 +453,49 @@ export function ImmersiveLanding() {
     return () => window.removeEventListener("wheel", handleWheel);
   }, []);
 
-  async function startProject() {
+  async function seedQuickProject(projectId: string) {
+    await saveParcel(projectId, { points: sampleParcel });
+    await saveConstraints(projectId, sampleConstraints);
+    for (const prototype of samplePrototypes) {
+      await createPrototype(projectId, prototype);
+    }
+  }
+
+  async function startProject(target: QuickStartTarget = "parcel") {
+    if (busyTarget) return;
+    const cleanTitle = title.trim();
+    const cleanCity = city.trim();
+    if (!cleanTitle || !cleanCity) {
+      setError("请先填写项目名称和城市");
+      return;
+    }
     try {
-      setBusy(true);
+      setBusyTarget(target);
       setError("");
-      const project = await createProject({ title, city });
+      const project = await createProject({ title: cleanTitle, city: cleanCity });
       setCurrentProjectId(project.id);
-      router.push(`/projects/${project.id}/parcel`);
+
+      if (target === "parcel" || target === "constraints" || target === "prototypes") {
+        router.push(`/projects/${project.id}/${target}`);
+        return;
+      }
+
+      await seedQuickProject(project.id);
+      const job = await generateSiteOptions(project.id, true);
+      if (job.status !== "finished" || !job.result_ids.length) {
+        throw new Error(job.error || "强排没有生成可用方案，请检查示例约束。");
+      }
+
+      if (target === "generate") {
+        router.push(`/projects/${project.id}/options`);
+        return;
+      }
+
+      router.push(`/projects/${project.id}/options/${job.result_ids[0]}/report`);
     } catch (event) {
       setError(event instanceof Error ? event.message : "创建失败");
     } finally {
-      setBusy(false);
+      setBusyTarget(null);
     }
   }
 
@@ -481,11 +588,11 @@ export function ImmersiveLanding() {
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3 md:mt-7 md:justify-start">
               <button
                 className="inline-flex min-h-11 items-center gap-2 border border-cyan-100/[0.24] bg-cyan-300/[0.12] px-5 py-3 text-sm font-bold text-cyan-50 shadow-[0_0_28px_rgba(34,211,238,0.18)] backdrop-blur transition hover:bg-cyan-300/20"
-                onClick={startProject}
-                disabled={busy}
+                onClick={() => startProject(chapterTarget[chapter.key])}
+                disabled={isBusy}
               >
-                {busy ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Sparkles size={17} aria-hidden />}
-                <span>{chapter.action}</span>
+                {isBusy ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <Sparkles size={17} aria-hidden />}
+                <span>{isBusy ? "处理中" : chapter.action}</span>
                 <ArrowRight size={16} aria-hidden />
               </button>
               {error ? <span className="text-sm font-semibold text-rose-200">{error}</span> : null}
@@ -515,20 +622,28 @@ export function ImmersiveLanding() {
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
               />
+              <span className="text-[11px] leading-4 text-cyan-100/45">
+                用于报告、视觉包和尽调检索上下文；当前不会自动套用地方控规或价格库。
+              </span>
             </label>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-cyan-50/[0.68] sm:mt-4">
-              <div className="border border-cyan-100/10 bg-white/5 p-2">
-                <Boxes className="mx-auto mb-1" size={15} aria-hidden />
-                几何
-              </div>
-              <div className="border border-cyan-100/10 bg-white/5 p-2">
-                <Sparkles className="mx-auto mb-1" size={15} aria-hidden />
-                强排
-              </div>
-              <div className="border border-cyan-100/10 bg-white/5 p-2">
-                <ArrowRight className="mx-auto mb-1" size={15} aria-hidden />
-                导出
-              </div>
+              {quickStartActions.map((action) => {
+                const Icon = action.icon;
+                const active = busyTarget === action.key;
+                return (
+                  <button
+                    key={action.key}
+                    type="button"
+                    title={action.title}
+                    disabled={isBusy}
+                    onClick={() => startProject(action.key)}
+                    className="border border-cyan-100/10 bg-white/5 p-2 transition hover:border-cyan-100/35 hover:bg-cyan-200/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {active ? <Loader2 className="mx-auto mb-1 animate-spin" size={15} aria-hidden /> : <Icon className="mx-auto mb-1" size={15} aria-hidden />}
+                    {active ? "处理中" : action.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

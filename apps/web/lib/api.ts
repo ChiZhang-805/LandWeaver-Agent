@@ -206,8 +206,9 @@ export function deletePrototype(projectId: string, prototypeId: string) {
   });
 }
 
-export function generateSiteOptions(projectId: string) {
-  return request<JobStatus>(`/api/projects/${projectId}/generate-site-options`, { method: "POST" });
+export function generateSiteOptions(projectId: string, runSync = false) {
+  const suffix = runSync ? "?run_sync=true" : "";
+  return request<JobStatus>(`/api/projects/${projectId}/generate-site-options${suffix}`, { method: "POST" });
 }
 
 export function getJob(jobId: string) {
