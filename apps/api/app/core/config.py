@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import json
 from contextvars import ContextVar, Token
 from functools import lru_cache
 from pathlib import Path
@@ -70,11 +69,6 @@ def get_settings() -> Settings:
     )
 
 
-def _openai_settings_path(settings: Settings | None = None) -> Path:
-    current = settings or get_settings()
-    return current.storage_dir / "openai_settings.json"
-
-
 def _mask_key(value: str | None) -> str | None:
     if not value:
         return None
@@ -83,26 +77,14 @@ def _mask_key(value: str | None) -> str | None:
     return f"{value[:7]}...{value[-4:]}"
 
 
-def _read_openai_runtime_settings() -> dict:
-    path = _openai_settings_path()
-    if not path.exists():
-        return {}
-    try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return payload if isinstance(payload, dict) else {}
-
-
 def get_openai_runtime_settings() -> dict:
     settings = get_settings()
-    runtime = _read_openai_runtime_settings()
     request_key = _request_openai_api_key.get()
     request_model = bool(_request_openai_model_text.get() or _request_openai_model_fast.get())
-    api_key = str(request_key or runtime.get("api_key") or settings.openai_api_key or "").strip() or None
-    model_text = str(_request_openai_model_text.get() or runtime.get("model_text") or settings.openai_model_text).strip()
-    model_fast = str(_request_openai_model_fast.get() or runtime.get("model_fast") or settings.openai_model_fast).strip()
-    source = "browser" if request_key or request_model else "web" if runtime.get("api_key") else "env" if settings.openai_api_key else "mock"
+    api_key = str(request_key or settings.openai_api_key or "").strip() or None
+    model_text = str(_request_openai_model_text.get() or settings.openai_model_text).strip()
+    model_fast = str(_request_openai_model_fast.get() or settings.openai_model_fast).strip()
+    source = "browser" if request_key or request_model else "env" if settings.openai_api_key else "mock"
     return {
         "api_key": api_key,
         "configured": bool(api_key),
@@ -111,29 +93,3 @@ def get_openai_runtime_settings() -> dict:
         "model_text": model_text,
         "model_fast": model_fast,
     }
-
-
-def save_openai_runtime_settings(api_key: str | None, model_text: str | None, model_fast: str | None) -> dict:
-    settings = get_settings()
-    path = _openai_settings_path(settings)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    current = _read_openai_runtime_settings()
-    if api_key is not None:
-        current["api_key"] = api_key.strip()
-    if model_text is not None:
-        current["model_text"] = model_text.strip() or settings.openai_model_text
-    if model_fast is not None:
-        current["model_fast"] = model_fast.strip() or settings.openai_model_fast
-    path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
-    try:
-        path.chmod(0o600)
-    except OSError:
-        pass
-    return get_openai_runtime_settings()
-
-
-def clear_openai_runtime_settings() -> dict:
-    path = _openai_settings_path()
-    if path.exists():
-        path.unlink()
-    return get_openai_runtime_settings()

@@ -8,11 +8,9 @@ from typing import Annotated, Any
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 
 from app.core.config import (
-    clear_openai_runtime_settings,
     get_openai_runtime_settings,
     get_settings,
     reset_request_openai_overrides,
-    save_openai_runtime_settings,
     set_request_openai_overrides,
 )
 from app.db.memory import STORE
@@ -25,7 +23,6 @@ from app.schemas.domain import (
     InvestmentMemo,
     JobStatus,
     OpenAISettingsStatus,
-    OpenAISettingsUpdate,
     OptionDeriveRequest,
     OptionReview,
     Parcel,
@@ -76,17 +73,6 @@ router = APIRouter(prefix="/api", tags=["LandWeaver"], dependencies=[Depends(_op
 @router.get("/settings/openai", response_model=OpenAISettingsStatus)
 def read_openai_settings() -> OpenAISettingsStatus:
     return OpenAISettingsStatus.model_validate(get_openai_runtime_settings())
-
-
-@router.put("/settings/openai", response_model=OpenAISettingsStatus)
-def update_openai_settings(payload: OpenAISettingsUpdate) -> OpenAISettingsStatus:
-    result = save_openai_runtime_settings(payload.api_key, payload.model_text, payload.model_fast)
-    return OpenAISettingsStatus.model_validate(result)
-
-
-@router.delete("/settings/openai", response_model=OpenAISettingsStatus)
-def delete_openai_settings() -> OpenAISettingsStatus:
-    return OpenAISettingsStatus.model_validate(clear_openai_runtime_settings())
 
 
 def _project_or_404(project_id: str) -> Project:

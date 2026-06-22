@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -302,3 +305,21 @@ def test_openai_settings_can_use_browser_request_header():
     after_resp = client.get("/api/settings/openai")
     assert after_resp.status_code == 200
     assert after_resp.json()["source"] == "mock"
+
+
+def test_openai_settings_rejects_backend_persistence():
+    settings_path = Path(os.environ["LANDWEAVER_STORAGE_DIR"]) / "openai_settings.json"
+
+    put_resp = client.put(
+        "/api/settings/openai",
+        json={
+            "api_key": "sk-should-not-touch-disk",
+            "model_text": "gpt-server-side-text",
+            "model_fast": "gpt-server-side-fast",
+        },
+    )
+    delete_resp = client.delete("/api/settings/openai")
+
+    assert put_resp.status_code == 405
+    assert delete_resp.status_code == 405
+    assert not settings_path.exists()

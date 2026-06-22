@@ -392,15 +392,9 @@ class ExportResponse(BaseModel):
     local_path: str
 
 
-class OpenAISettingsUpdate(BaseModel):
-    api_key: str | None = None
-    model_text: str | None = Field(default=None, min_length=1)
-    model_fast: str | None = Field(default=None, min_length=1)
-
-
 class OpenAISettingsStatus(BaseModel):
     configured: bool
-    source: Literal["browser", "web", "env", "mock"]
+    source: Literal["browser", "env", "mock"]
     masked_key: str | None = None
     model_text: str
     model_fast: str

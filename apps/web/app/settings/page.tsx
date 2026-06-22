@@ -17,7 +17,6 @@ import type { OpenAISettingsStatus } from "@/lib/types";
 
 function sourceLabel(source?: OpenAISettingsStatus["source"]) {
   if (source === "browser") return "本浏览器";
-  if (source === "web") return "网页设置";
   if (source === "env") return "环境变量";
   return "Mock";
 }
