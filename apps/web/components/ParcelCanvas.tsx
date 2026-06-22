@@ -1,28 +1,37 @@
 "use client";
 
-import { Eraser, SquareMousePointer } from "lucide-react";
+import { Eraser, SquareMousePointer, ZoomIn, ZoomOut } from "lucide-react";
+import { useState } from "react";
 import type { Coordinate } from "@/lib/types";
+
+type CanvasBounds = {
+  minX: number;
+  minY: number;
+  width: number;
+  height: number;
+};
+
+const EMPTY_CANVAS_BOUNDS: CanvasBounds = { minX: -15, minY: -15, width: 150, height: 110 };
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 0.25;
 
 function pointsToString(points: Coordinate[]) {
   return points.map(([x, y]) => `${x},${y}`).join(" ");
 }
 
-function canvasBounds(points: Coordinate[]) {
-  if (!points.length) return { minX: -15, minY: -15, width: 150, height: 110 };
-  const xs = points.map(([x]) => x);
-  const ys = points.map(([, y]) => y);
-  const minX = Math.min(...xs);
-  const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
-  const maxY = Math.max(...ys);
-  const width = Math.max(30, maxX - minX);
-  const height = Math.max(30, maxY - minY);
-  const padding = Math.max(width, height) * 0.12;
+function clampZoom(value: number) {
+  return Number(Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value)).toFixed(2));
+}
+
+function canvasBounds(zoom: number): CanvasBounds {
+  const width = EMPTY_CANVAS_BOUNDS.width / zoom;
+  const height = EMPTY_CANVAS_BOUNDS.height / zoom;
   return {
-    minX: minX - padding,
-    minY: minY - padding,
-    width: width + padding * 2,
-    height: height + padding * 2
+    minX: EMPTY_CANVAS_BOUNDS.minX + (EMPTY_CANVAS_BOUNDS.width - width) / 2,
+    minY: EMPTY_CANVAS_BOUNDS.minY + (EMPTY_CANVAS_BOUNDS.height - height) / 2,
+    width,
+    height
   };
 }
 
@@ -35,6 +44,8 @@ export function ParcelCanvas({
   onChange: (points: Coordinate[]) => void;
   className?: string;
 }) {
+  const [zoom, setZoom] = useState(MIN_ZOOM);
+
   function handleClick(event: React.MouseEvent<SVGSVGElement>) {
     const svg = event.currentTarget;
     const matrix = svg.getScreenCTM();
@@ -48,8 +59,8 @@ export function ParcelCanvas({
     onChange([...points, [Number(x.toFixed(1)), Number(y.toFixed(1))]]);
   }
 
-  const viewBox = canvasBounds(points);
-  const gridSize = Math.max(10, Math.round(Math.max(viewBox.width, viewBox.height) / 12));
+  const viewBox = canvasBounds(zoom);
+  const gridSize = Math.max(10, Math.round(Math.max(EMPTY_CANVAS_BOUNDS.width, EMPTY_CANVAS_BOUNDS.height) / 12));
 
   return (
     <div className={`panel flex min-h-[360px] flex-col overflow-hidden ${className}`}>
@@ -58,9 +69,29 @@ export function ParcelCanvas({
           <SquareMousePointer size={18} aria-hidden />
           <span>地块画布</span>
         </div>
-        <button title="清空" className="icon-button border border-line bg-white" onClick={() => onChange([])}>
-          <Eraser size={16} aria-hidden />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            title="缩小画布"
+            aria-label="缩小画布"
+            className="icon-button size-10 min-h-0 border border-line bg-white p-0"
+            disabled={zoom <= MIN_ZOOM}
+            onClick={() => setZoom((current) => clampZoom(current - ZOOM_STEP))}
+          >
+            <ZoomOut size={16} aria-hidden />
+          </button>
+          <button
+            title="放大画布"
+            aria-label="放大画布"
+            className="icon-button size-10 min-h-0 border border-line bg-white p-0"
+            disabled={zoom >= MAX_ZOOM}
+            onClick={() => setZoom((current) => clampZoom(current + ZOOM_STEP))}
+          >
+            <ZoomIn size={16} aria-hidden />
+          </button>
+          <button title="清空" aria-label="清空画布" className="icon-button size-10 min-h-0 border border-line bg-white p-0" onClick={() => onChange([])}>
+            <Eraser size={16} aria-hidden />
+          </button>
+        </div>
       </div>
       <svg
         className="block min-h-0 w-full flex-1 cursor-crosshair bg-white"
