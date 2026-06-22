@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -21,6 +23,9 @@ app.include_router(projects_router)
 export_dir = settings.storage_dir / "exports"
 export_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/exports", StaticFiles(directory=export_dir), name="exports")
+library_assets_dir = Path(__file__).resolve().parent / "data" / "data_library" / "assets"
+library_assets_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/library-assets/land", StaticFiles(directory=library_assets_dir), name="landweaver_library_assets")
 
 
 @app.get("/health")

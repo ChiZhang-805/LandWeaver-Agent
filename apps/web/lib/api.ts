@@ -2,6 +2,8 @@ import type {
   BuildingPrototype,
   ConstraintSet,
   Coordinate,
+  DataLibrarySearchResponse,
+  DataLibraryType,
   DueDiligencePack,
   InvestmentMemo,
   ProjectCommandCenter,
@@ -156,6 +158,21 @@ export function getProjectDiagnostics(projectId: string) {
 
 export function getProjectCommandCenter(projectId: string) {
   return request<ProjectCommandCenter>(`/api/projects/${projectId}/command-center`);
+}
+
+export function searchDataLibrary(params: {
+  query?: string;
+  datasetType?: DataLibraryType | "";
+  city?: string;
+  limit?: number;
+} = {}) {
+  const search = new URLSearchParams();
+  if (params.query) search.set("query", params.query);
+  if (params.datasetType) search.set("dataset_type", params.datasetType);
+  if (params.city) search.set("city", params.city);
+  if (params.limit !== undefined) search.set("limit", String(params.limit));
+  const suffix = search.toString() ? `?${search.toString()}` : "";
+  return request<DataLibrarySearchResponse>(`/api/data-library${suffix}`);
 }
 
 export function createVisualDesign(projectId: string, payload: VisualDesignRequest) {

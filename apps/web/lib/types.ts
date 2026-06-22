@@ -225,6 +225,43 @@ export type DatasetQuerySpec = {
   license_note: string;
 };
 
+export type DataLibraryType = "parcel" | "zoning" | "market" | "cost" | "prototype" | "mobility" | "context";
+
+export type DataLibrarySource = {
+  id: string;
+  name: string;
+  url: string;
+  dataset_type: DataLibraryType;
+  license: string;
+  commercial_use: "allowed" | "restricted" | "unknown";
+  recommended_use: string;
+  notes: string[];
+};
+
+export type DataLibraryItem = {
+  id: string;
+  title: string;
+  dataset_type: DataLibraryType;
+  city: string;
+  district?: string | null;
+  source_dataset_id: string;
+  source_dataset_name: string;
+  source_url: string;
+  license: string;
+  commercial_use: "allowed" | "restricted" | "unknown";
+  summary: string;
+  tags: string[];
+  metrics: Record<string, number | string | null>;
+  preview_image_url?: string | null;
+  preview_kind: "map" | "chart" | "prototype" | "document";
+  match_score: number;
+};
+
+export type DataLibrarySearchResponse = {
+  sources: DataLibrarySource[];
+  items: DataLibraryItem[];
+};
+
 export type DueDiligencePack = {
   option_id: string;
   project_id: string;

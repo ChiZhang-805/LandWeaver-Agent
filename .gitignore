@@ -14,6 +14,8 @@ coverage/
 
 apps/api/storage/
 tmp_*/
+data/raw/
+data/external/
 .env
 .DS_Store
 npm-debug.log*

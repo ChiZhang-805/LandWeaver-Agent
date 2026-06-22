@@ -18,6 +18,7 @@ from app.schemas.domain import (
     BuildingPrototype,
     BuildingPrototypeCreate,
     ConstraintSet,
+    DataLibrarySearchResponse,
     DueDiligencePack,
     ExportResponse,
     InvestmentMemo,
@@ -41,6 +42,7 @@ from app.schemas.domain import (
     VisualDesignRequest,
     new_id,
 )
+from app.services.data_library_service import list_data_library_sources, search_data_library
 from app.services.design_diagnostics import diagnose_project_design
 from app.services.due_diligence_pack import build_due_diligence_pack
 from app.services.investment_memo import build_investment_memo
@@ -73,6 +75,22 @@ router = APIRouter(prefix="/api", tags=["LandWeaver"], dependencies=[Depends(_op
 @router.get("/settings/openai", response_model=OpenAISettingsStatus)
 def read_openai_settings() -> OpenAISettingsStatus:
     return OpenAISettingsStatus.model_validate(get_openai_runtime_settings())
+
+
+@router.get("/data-library", response_model=DataLibrarySearchResponse)
+def search_land_data_library(
+    query: str | None = Query(default=None, max_length=160),
+    dataset_type: str | None = Query(
+        default=None,
+        pattern="^(parcel|zoning|market|cost|prototype|mobility|context)$",
+    ),
+    city: str | None = Query(default=None, max_length=80),
+    limit: int = Query(default=24, ge=1, le=80),
+) -> DataLibrarySearchResponse:
+    return DataLibrarySearchResponse(
+        sources=list_data_library_sources(),
+        items=search_data_library(query=query, dataset_type=dataset_type, city=city, limit=limit),
+    )
 
 
 def _project_or_404(project_id: str) -> Project:

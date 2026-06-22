@@ -1,6 +1,6 @@
 "use client";
 
-import { Blocks, ChartNoAxesCombined, ClipboardList, FileText, FolderKanban, Home, LandPlot, Map, Palette, Ruler, Settings, Sparkles } from "lucide-react";
+import { Blocks, ChartNoAxesCombined, ClipboardList, Database, FileText, FolderKanban, Home, LandPlot, Map, Palette, Ruler, Settings, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -8,6 +8,7 @@ const steps = [
   { label: "指挥", href: "command", icon: ClipboardList },
   { label: "地块", href: "parcel", icon: Map },
   { label: "简报", href: "brief", icon: FileText },
+  { label: "数据", href: "data", icon: Database },
   { label: "约束", href: "constraints", icon: Ruler },
   { label: "原型", href: "prototypes", icon: Blocks },
   { label: "生成", href: "generate", icon: Sparkles },

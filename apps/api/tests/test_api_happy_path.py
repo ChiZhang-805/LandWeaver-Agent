@@ -11,6 +11,18 @@ from app.main import app
 client = TestClient(app)
 
 
+def test_data_library_search_supports_city_and_type_filters():
+    response = client.get("/api/data-library?query=上海%20成本&city=上海&dataset_type=cost")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["sources"]
+    assert payload["items"]
+    assert all(item["dataset_type"] == "cost" for item in payload["items"])
+    assert all(item["city"] in {"上海", "全国"} for item in payload["items"])
+    assert payload["items"][0]["preview_kind"] in {"chart", "map", "prototype", "document"}
+
+
 def test_api_happy_path(rectangular_parcel, planning_constraints, tower_prototype, slab_prototype):
     project_resp = client.post("/api/projects", json={"title": "Demo Parcel", "city": "Shanghai"})
     assert project_resp.status_code == 200

@@ -108,7 +108,7 @@ pytest
 - `cd apps/web && npm run lint`：无警告或错误。
 - `cd apps/web && npm run build`：通过。
 
-详细升级设计见 [docs/WORKFLOW_LLM_UPGRADE.md](docs/WORKFLOW_LLM_UPGRADE.md)，包含后端工作流拆分、Project Command Center、Due Diligence Pack、LLM/视觉/文本模块、便携服务和未来 PostGIS/市场/成本/竞品数据库接入路线。
+详细升级设计见 [docs/WORKFLOW_LLM_UPGRADE.md](docs/WORKFLOW_LLM_UPGRADE.md)，包含后端工作流拆分、Project Command Center、Due Diligence Pack、LLM/视觉/文本模块、便携服务和未来 PostGIS/市场/成本/竞品数据库接入路线。检索库数据导入说明见 [docs/DATA_LIBRARY_IMPORT.md](docs/DATA_LIBRARY_IMPORT.md)。
 
 ## .env.example
 
@@ -152,7 +152,7 @@ apps/api/app/services/openai_service.py
 
 ## 数据库接入策略
 
-LandWeaver 的检索不应只做“地块名搜索”，而应围绕投拓和强排决策建立多层数据仓：
+LandWeaver 的检索不应只做“地块名搜索”，而应围绕投拓和强排决策建立多层数据仓。外部数据的 license 字段主要用于来源追溯、归属和样本治理，不作为当前 demo 的商业模板限制：
 
 - 空间底图与建筑物：Overture Maps 的 buildings / places / divisions / transportation、OpenStreetMap/Geofabrik 分区切片、Microsoft Global ML Building Footprints，可用于周边建成环境、道路、POI、建筑密度和地块上下文检索。
 - 行政区与人口经济：美国场景可接 Census TIGER/Line、ACS、HUD-USPS ZIP Crosswalk；其他国家/城市应优先使用官方统计局、规划局、开放数据门户或授权商业数据。

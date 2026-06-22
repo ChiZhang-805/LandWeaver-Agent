@@ -334,6 +334,41 @@ class DatasetQuerySpec(BaseModel):
     license_note: str
 
 
+class DataLibrarySource(BaseModel):
+    id: str
+    name: str
+    url: str
+    dataset_type: Literal["parcel", "zoning", "market", "cost", "prototype", "mobility", "context"]
+    license: str
+    commercial_use: Literal["allowed", "restricted", "unknown"]
+    recommended_use: str
+    notes: list[str] = Field(default_factory=list)
+
+
+class DataLibraryItem(BaseModel):
+    id: str
+    title: str
+    dataset_type: Literal["parcel", "zoning", "market", "cost", "prototype", "mobility", "context"]
+    city: str
+    district: str | None = None
+    source_dataset_id: str
+    source_dataset_name: str
+    source_url: str
+    license: str
+    commercial_use: Literal["allowed", "restricted", "unknown"]
+    summary: str
+    tags: list[str] = Field(default_factory=list)
+    metrics: dict[str, float | int | str | None] = Field(default_factory=dict)
+    preview_image_url: str | None = None
+    preview_kind: Literal["map", "chart", "prototype", "document"] = "map"
+    match_score: float = Field(ge=0, le=100)
+
+
+class DataLibrarySearchResponse(BaseModel):
+    sources: list[DataLibrarySource] = Field(default_factory=list)
+    items: list[DataLibraryItem] = Field(default_factory=list)
+
+
 class DueDiligencePack(BaseModel):
     option_id: str
     project_id: str
