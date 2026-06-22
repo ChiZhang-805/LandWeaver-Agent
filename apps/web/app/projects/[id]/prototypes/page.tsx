@@ -74,12 +74,26 @@ export default function PrototypesPage() {
   const [draft, setDraft] = useState<PrototypeDraft>(emptyDraft);
   const [editingId, setEditingId] = useState("");
   const [templateQuery, setTemplateQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
     getProject(projectId)
-      .then((aggregate) => setItems(aggregate.prototypes))
-      .catch(() => undefined);
+      .then((aggregate) => {
+        if (active) setItems(aggregate.prototypes);
+      })
+      .catch((event) => {
+        if (active) setStatus(event instanceof Error ? event.message : "原型加载失败");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [projectId]);
 
   function updateDraft(key: keyof PrototypeDraft, value: string) {
@@ -105,13 +119,22 @@ export default function PrototypesPage() {
   }
 
   async function add(payload: PrototypeDraft) {
-    const prototype = await createPrototype(projectId, payload);
-    setItems((current) => [...current, prototype]);
-    setStatus(`已创建 ${prototype.type}`);
+    try {
+      setBusy(true);
+      setStatus("");
+      const prototype = await createPrototype(projectId, payload);
+      setItems((current) => [...current, prototype]);
+      setStatus(`已创建 ${prototype.type}`);
+    } catch (event) {
+      setStatus(event instanceof Error ? event.message : "创建失败");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function addDefaults() {
     try {
+      setBusy(true);
       const existingTypes = new Set(items.map((item) => item.type));
       const missing = [templates[0], templates[1]].filter((template) => !existingTypes.has(template.type));
       if (!missing.length) {
@@ -123,32 +146,44 @@ export default function PrototypesPage() {
       setStatus(`已创建 ${created.map((item) => item.type).join(" / ")}`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
+    } finally {
+      setBusy(false);
     }
   }
 
   async function submitDraft() {
     try {
+      if (!editingId) {
+        await add(draft);
+        return;
+      }
+      setBusy(true);
+      setStatus("");
       if (editingId) {
         const updated = await updatePrototype(projectId, editingId, draft);
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setEditingId("");
         setStatus(`已更新 ${updated.type}`);
-      } else {
-        await add(draft);
       }
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "保存失败");
+    } finally {
+      setBusy(false);
     }
   }
 
   async function remove(item: BuildingPrototype) {
     try {
+      setBusy(true);
+      setStatus("");
       await deletePrototype(projectId, item.id);
       setItems((current) => current.filter((candidate) => candidate.id !== item.id));
       if (editingId === item.id) setEditingId("");
       setStatus(`已删除 ${item.type}`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "删除失败");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -187,7 +222,7 @@ export default function PrototypesPage() {
             <p className="page-copy mt-2">候选楼型、层数、标准层和户型效率。</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button title="创建默认组合" className="icon-button bg-teal text-white" onClick={addDefaults}>
+            <button title="创建默认组合" className="icon-button bg-teal text-white" disabled={busy} onClick={addDefaults}>
               <Plus size={16} aria-hidden />
               <span>tower + slab</span>
             </button>
@@ -224,7 +259,7 @@ export default function PrototypesPage() {
                           </p>
                         </div>
                       </div>
-                      <button title={`创建 ${prototype.type}`} className="icon-button border border-line bg-white" onClick={() => add(prototype)}>
+                      <button title={`创建 ${prototype.type}`} className="icon-button border border-line bg-white" disabled={busy} onClick={() => add(prototype)}>
                         <Plus size={16} aria-hidden />
                       </button>
                     </div>
@@ -264,59 +299,62 @@ export default function PrototypesPage() {
                   <Field label="套均面积 m2" value={draft.avg_unit_area_m2} onChange={(value) => updateDraft("avg_unit_area_m2", value)} />
                   <Field label="层高 m" value={draft.height_per_floor_m} onChange={(value) => updateDraft("height_per_floor_m", value)} />
                 </div>
-                <button title={editingId ? "更新原型" : "创建原型"} className="icon-button mt-4 bg-teal text-white" onClick={submitDraft}>
+                <button title={editingId ? "更新原型" : "创建原型"} className="icon-button mt-4 bg-teal text-white" disabled={busy} onClick={submitDraft}>
                   <Plus size={16} aria-hidden />
                   <span>{editingId ? "更新" : "创建"}</span>
                 </button>
               </div>
             </div>
           </div>
-          <div className="panel min-h-0 overflow-hidden">
-            <div className="h-full overflow-y-auto overflow-x-hidden">
-              <table className="data-table w-full table-fixed">
-                <thead>
-                  <tr>
-                    <th>类型</th>
-                    <th>尺寸</th>
-                    <th>层数</th>
-                    <th>标准层</th>
-                    <th>户/层</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length ? (
-                    items.map((item) => (
-                      <tr key={item.id} className="border-t border-line">
-                        <td className="font-semibold">{item.type}</td>
-                        <td>{item.footprint_width_m} x {item.footprint_depth_m}m</td>
-                        <td>{item.floors_min}-{item.floors_max}</td>
-                        <td>{item.typical_floor_gfa_m2} m2</td>
-                        <td>{item.units_per_floor}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button title="编辑" className="icon-button border border-line bg-white" onClick={() => edit(item)}>
-                              <Pencil size={15} aria-hidden />
-                            </button>
-                            <button title="删除" className="icon-button border border-line bg-white text-rose" onClick={() => remove(item)}>
-                              <Trash2 size={15} aria-hidden />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td className="px-4 py-6" colSpan={6}>
-                        <div className="empty-state">
-                          <p className="font-bold text-ink">暂无原型</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          <div className="panel min-h-0 overflow-hidden p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="section-title">当前原型</h2>
+              <span className="text-xs font-bold text-slate-500">{loading ? "加载中" : `${items.length} 个`}</span>
             </div>
+            {items.length ? (
+              <div className="grid max-h-full gap-3 overflow-y-auto overflow-x-hidden pr-1">
+                {items.map((item) => (
+                  <article key={item.id} className="rounded-[8px] border border-line/80 bg-white p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="break-words font-bold text-ink">{item.type}</h3>
+                        <p className="mt-1 break-all text-xs font-semibold text-slate-500">{item.id}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button title="编辑" className="icon-button border border-line bg-white" disabled={busy} onClick={() => edit(item)}>
+                          <Pencil size={15} aria-hidden />
+                        </button>
+                        <button title="删除" className="icon-button border border-line bg-white text-rose" disabled={busy} onClick={() => remove(item)}>
+                          <Trash2 size={15} aria-hidden />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">尺寸</p>
+                        <p className="mt-1 font-semibold text-ink">{item.footprint_width_m} x {item.footprint_depth_m}m</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">层数</p>
+                        <p className="mt-1 font-semibold text-ink">{item.floors_min}-{item.floors_max}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">标准层</p>
+                        <p className="mt-1 font-semibold text-ink">{item.typical_floor_gfa_m2} m2</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">户/层</p>
+                        <p className="mt-1 font-semibold text-ink">{item.units_per_floor}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state h-full">
+                <p className="font-bold text-ink">{loading ? "原型加载中" : "暂无原型"}</p>
+              </div>
+            )}
           </div>
         </div>
         {status ? <p className={`mt-3 shrink-0 status-message ${status.includes("失败") ? "danger-message" : ""}`}>{status}</p> : null}
