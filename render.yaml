@@ -22,8 +22,5 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.18.1
-      - key: LANDWEAVER_API_HOSTPORT
-        fromService:
-          type: web
-          name: landweaver-api
-          property: hostport
+      - key: LANDWEAVER_API_BASE_URL
+        value: https://landweaver-api.onrender.com
