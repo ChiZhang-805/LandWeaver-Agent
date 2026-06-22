@@ -69,7 +69,7 @@ const chapters: Chapter[] = [
   {
     key: "solver",
     label: "强排",
-    kicker: "CP-SAT OPTION SPACE",
+    kicker: "候选方案空间",
     title: "多策略强排，同屏比较",
     body: "收益优先、均衡和低风险策略在约束内选择楼栋组合，并暴露风险提示。",
     action: "生成方案",

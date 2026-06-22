@@ -13,7 +13,7 @@ import { OptionScene3D } from "@/components/OptionScene3D";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { buildDownloadUrl, createDueDiligence, createInvestmentMemo, createOptionReport, deriveOption, explainOption, exportOption, getOption, getOptionReview, getProject, getSensitivity } from "@/lib/api";
-import { strategyLabel } from "@/lib/labels";
+import { prototypeTypeLabel, strategyLabel } from "@/lib/labels";
 import type { DueDiligencePack, InvestmentMemo, OptionReview, Parcel, SensitivityScenario, SiteOption } from "@/lib/types";
 
 function money(value: number) {
@@ -24,6 +24,11 @@ function money(value: number) {
 
 function variableLabel(value: SensitivityScenario["variable"]) {
   return value === "avg_selling_price_cny_per_m2" ? "售价" : "建安成本";
+}
+
+function buildingTypeLabel(value: string | null | undefined, index: number) {
+  const label = prototypeTypeLabel(value);
+  return label === "-" ? `楼栋 ${index + 1}` : label;
 }
 
 export default function OptionDetailPage() {
@@ -145,9 +150,9 @@ export default function OptionDetailPage() {
     <Shell projectId={projectId}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="page-kicker">OPTION DETAIL</p>
+          <p className="page-kicker">方案详情</p>
           <h1 className="page-title mt-2">方案详情</h1>
-          <p className="page-copy mt-2">{option ? `${strategyLabel(option.strategy)} · score ${option.score.toFixed(1)} · seed ${option.seed}` : "方案数据加载中"}</p>
+          <p className="page-copy mt-2">{option ? `${strategyLabel(option.strategy)} · 评分 ${option.score.toFixed(1)}` : "方案数据加载中"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
@@ -201,7 +206,7 @@ export default function OptionDetailPage() {
               <div className="panel p-5">
                 <div className="mb-3 flex flex-wrap gap-2">
                   <StatusPill tone={option.violations.length ? "risk" : "ok"}>{strategyLabel(option.strategy)}</StatusPill>
-                  <StatusPill>score {option.score.toFixed(1)}</StatusPill>
+                  <StatusPill>评分 {option.score.toFixed(1)}</StatusPill>
                 </div>
                 <div className="grid gap-2">
                   {option.violations.map((item) => (
@@ -224,7 +229,7 @@ export default function OptionDetailPage() {
                 <article key={`${building.prototype_id}-${index}`} className="rounded-[8px] border border-line/80 bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="break-words font-bold text-ink">{building.prototype_type || building.prototype_id}</h3>
+                      <h3 className="break-words font-bold text-ink">{buildingTypeLabel(building.prototype_type, index)}</h3>
                       <p className="mt-1 text-xs font-semibold text-slate-500">旋转 {building.rotation_deg}°</p>
                     </div>
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-[8px] border border-line bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
@@ -243,7 +248,7 @@ export default function OptionDetailPage() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-slate-500">建面</p>
-                      <p className="mt-1 font-semibold text-ink">{building.gfa_m2.toLocaleString("zh-CN")} m2</p>
+                      <p className="mt-1 font-semibold text-ink">{building.gfa_m2.toLocaleString("zh-CN")} ㎡</p>
                     </div>
                     <div>
                       <p className="text-xs font-bold text-slate-500">户数</p>
@@ -260,7 +265,7 @@ export default function OptionDetailPage() {
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {Object.entries(option.metrics.product_breakdown as Record<string, { building_count: number; gfa_m2: number; units: number; revenue_cny: number }>).map(([key, value]) => (
                   <article key={key} className="rounded-[8px] border border-line/80 bg-white p-4">
-                    <h3 className="break-words font-bold text-ink">{key}</h3>
+                    <h3 className="break-words font-bold text-ink">{prototypeTypeLabel(key)}</h3>
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <p className="text-xs font-bold text-slate-500">楼栋</p>
@@ -272,7 +277,7 @@ export default function OptionDetailPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">建面</p>
-                        <p className="mt-1 font-semibold text-ink">{value.gfa_m2.toLocaleString("zh-CN")} m2</p>
+                        <p className="mt-1 font-semibold text-ink">{value.gfa_m2.toLocaleString("zh-CN")} ㎡</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">货值</p>

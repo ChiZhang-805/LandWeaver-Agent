@@ -309,9 +309,9 @@ export default function PrototypesPage() {
                   <Field label="进深 m" value={draft.footprint_depth_m} onChange={(value) => updateDraft("footprint_depth_m", value)} />
                   <Field label="最低层数" value={draft.floors_min} step="1" onChange={(value) => updateDraft("floors_min", value)} />
                   <Field label="最高层数" value={draft.floors_max} step="1" onChange={(value) => updateDraft("floors_max", value)} />
-                  <Field label="标准层 m2" value={draft.typical_floor_gfa_m2} onChange={(value) => updateDraft("typical_floor_gfa_m2", value)} />
+                  <Field label="标准层 ㎡" value={draft.typical_floor_gfa_m2} onChange={(value) => updateDraft("typical_floor_gfa_m2", value)} />
                   <Field label="户/层" value={draft.units_per_floor} step="1" onChange={(value) => updateDraft("units_per_floor", value)} />
-                  <Field label="套均面积 m2" value={draft.avg_unit_area_m2} onChange={(value) => updateDraft("avg_unit_area_m2", value)} />
+                  <Field label="套均面积 ㎡" value={draft.avg_unit_area_m2} onChange={(value) => updateDraft("avg_unit_area_m2", value)} />
                   <Field label="层高 m" value={draft.height_per_floor_m} onChange={(value) => updateDraft("height_per_floor_m", value)} />
                 </div>
                 <button title="保存原型" className="icon-button mt-4 bg-teal text-white" disabled={busy} onClick={submitDraft}>
@@ -355,7 +355,7 @@ export default function PrototypesPage() {
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">标准层</p>
-                        <p className="mt-1 font-semibold text-ink">{item.typical_floor_gfa_m2} m2</p>
+                        <p className="mt-1 font-semibold text-ink">{item.typical_floor_gfa_m2} ㎡</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">户/层</p>

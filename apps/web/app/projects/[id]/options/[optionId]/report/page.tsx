@@ -65,7 +65,7 @@ export default function OptionReportPage() {
     <Shell projectId={projectId}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
-          <p className="page-kicker">REPORT</p>
+          <p className="page-kicker">方案报告</p>
           <h1 className="page-title mt-2">方案报告</h1>
           <p className="page-copy mt-2">{project && option ? `${project.title} · ${strategyLabel(option.strategy)}` : "报告数据加载中"}</p>
         </div>
@@ -85,9 +85,9 @@ export default function OptionReportPage() {
       {option && project ? (
         <article className="panel grid gap-6 p-6 print:border-0 print:p-0 print:shadow-none">
           <header>
-            <p className="text-sm font-semibold text-teal">LANDWEAVER OPTION REPORT</p>
+            <p className="text-sm font-semibold text-teal">地织方案报告</p>
             <h2 className="mt-2 text-3xl font-black text-ink">{project.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{project.city} · {strategyLabel(option.strategy)} · {parcel?.area_m2.toLocaleString("zh-CN")} m2</p>
+            <p className="mt-2 text-sm text-slate-600">{project.city} · {strategyLabel(option.strategy)} · {parcel?.area_m2.toLocaleString("zh-CN")} ㎡</p>
           </header>
           <MetricGrid metrics={option.metrics} />
           <OptionCanvas parcel={parcel} option={option} />

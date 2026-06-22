@@ -203,7 +203,7 @@ export default function ParcelPage() {
         geojson ? { geojson, source: "geojson" } : dxfText ? { dxf_text: dxfText, source: "dxf" } : { points, source: "manual" }
       );
       setIsSaved(true);
-      setStatus(`已保存 ${parcel.area_m2.toLocaleString("zh-CN")} m2`);
+      setStatus(`已保存 ${parcel.area_m2.toLocaleString("zh-CN")} ㎡`);
     } catch (event) {
       setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -271,7 +271,7 @@ export default function ParcelPage() {
             <div className="mt-3 grid gap-3">
               <div className="rounded-[8px] border border-teal/20 bg-teal/5 p-3">
                 <p className="text-xs font-bold text-slate-500">估算面积</p>
-                <p className="mt-1 text-2xl font-black text-ink">{polygonArea(points).toLocaleString("zh-CN", { maximumFractionDigits: 1 })} m2</p>
+                <p className="mt-1 text-2xl font-black text-ink">{polygonArea(points).toLocaleString("zh-CN", { maximumFractionDigits: 1 })} ㎡</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-[8px] border border-line bg-white p-3">

@@ -23,6 +23,10 @@ function sourceLabel(value: VisualDesignPackage["source"]) {
   return value === "openai" ? "OpenAI" : "本地生成";
 }
 
+function optionDisplayLabel(index: number, strategy: string, score: number) {
+  return `方案 ${index + 1}｜${strategyLabel(strategy)}｜评分 ${score.toFixed(1)}`;
+}
+
 export default function VisualDesignPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
@@ -59,6 +63,7 @@ export default function VisualDesignPage() {
     try {
       setBusy(true);
       setStatus("");
+      setPackageData(null);
       const result = await createVisualDesign(projectId, {
         option_id: selectedOption?.id || null,
         style_preference: stylePreference,
@@ -88,8 +93,8 @@ export default function VisualDesignPage() {
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="page-kicker">VISUAL DESIGN</p>
-            <h1 className="page-title mt-2">AI Visual Design Studio</h1>
+            <p className="page-kicker">视觉设计</p>
+            <h1 className="page-title mt-2">AI 视觉设计工作台</h1>
             <p className="page-copy mt-2">基于真实强排、指标和简报生成视觉方向、材质色板、景观策略与渲染提示词。</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -119,9 +124,9 @@ export default function VisualDesignPage() {
                   <span>绑定方案</span>
                   <select className="input-control" value={selectedOptionId} onChange={(event) => setSelectedOptionId(event.target.value)}>
                     {aggregate?.options.length ? (
-                      aggregate.options.map((option) => (
+                      aggregate.options.map((option, index) => (
                         <option key={option.id} value={option.id}>
-                          {strategyLabel(option.strategy)} · score {option.score.toFixed(1)} · {option.id}
+                          {optionDisplayLabel(index, option.strategy, option.score)}
                         </option>
                       ))
                     ) : (
@@ -158,7 +163,7 @@ export default function VisualDesignPage() {
                 <OptionCanvas compact className="h-full" parcel={aggregate?.parcel || null} option={selectedOption} />
               ) : (
                 <div className="panel flex h-full min-h-[220px] items-center justify-center p-5 text-center text-sm font-semibold text-slate-500">
-                  当前项目还没有方案。可以先生成视觉方向，也可以去生成页创建 site options。
+                  当前项目还没有方案。可以先生成视觉方向，也可以去生成页创建强排方案。
                 </div>
               )}
             </div>
@@ -170,7 +175,7 @@ export default function VisualDesignPage() {
                 <div className="shrink-0">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="page-kicker">VISUAL PACKAGE</p>
+                      <p className="page-kicker">视觉设计包</p>
                       <h2 className="page-title mt-1 text-[1.65rem]">{packageData.design_title}</h2>
                     </div>
                     <StatusPill tone={packageData.source === "openai" ? "ok" : "warn"}>{sourceLabel(packageData.source)}</StatusPill>
@@ -275,8 +280,12 @@ export default function VisualDesignPage() {
             ) : (
               <div className="empty-state h-full">
                 <div className="text-center">
-                  <p className="font-bold text-ink">等待生成视觉设计包</p>
-                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">它会把方案指标、评审和产品简报转成可执行的视觉表达，而不改动真实强排结果。</p>
+                  <p className="font-bold text-ink">{busy ? "正在生成视觉设计包" : "等待生成视觉设计包"}</p>
+                  {busy ? (
+                    <div className="mx-auto mt-4 h-2 w-64 max-w-full overflow-hidden rounded-full bg-teal/10">
+                      <div className="h-full w-2/3 animate-pulse rounded-full bg-teal" />
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}

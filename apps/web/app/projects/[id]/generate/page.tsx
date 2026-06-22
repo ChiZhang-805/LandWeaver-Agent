@@ -128,8 +128,8 @@ export default function GeneratePage() {
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="page-kicker">GENERATE</p>
-            <h1 className="page-title mt-2">生成 site options</h1>
+            <p className="page-kicker">生成</p>
+            <h1 className="page-title mt-2">生成强排方案</h1>
             <p className="page-copy mt-2">候选排布、指标计算和经济测算。</p>
           </div>
           <div className="flex gap-2">

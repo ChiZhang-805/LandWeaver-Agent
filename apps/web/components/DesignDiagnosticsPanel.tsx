@@ -40,7 +40,7 @@ export function DesignDiagnosticsPanel({ diagnostics }: { diagnostics: ProjectDi
   const coreMetrics = [
     { label: "诊断分", value: diagnostics.score, suffix: "", icon: Gauge },
     { label: "候选数", value: diagnostics.metrics.candidate_count, suffix: "", icon: Activity },
-    { label: "可建面积", value: diagnostics.metrics.buildable_area_m2, suffix: " m2", icon: Ruler },
+    { label: "可建面积", value: diagnostics.metrics.buildable_area_m2, suffix: " ㎡", icon: Ruler },
     { label: "FAR 粗判", value: formatPercent(diagnostics.metrics.estimated_far_utilization), suffix: "", icon: CheckCircle2, textValue: true }
   ];
 
@@ -49,7 +49,7 @@ export function DesignDiagnosticsPanel({ diagnostics }: { diagnostics: ProjectDi
       <div className="shrink-0">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="page-kicker">DESIGN RADAR</p>
+            <p className="page-kicker">设计诊断</p>
             <h2 className="section-title mt-1">设计诊断</h2>
           </div>
           <StatusPill tone={diagnostics.readiness === "ready" ? "ok" : diagnostics.readiness === "needs_attention" ? "warn" : "risk"}>{readinessLabel(diagnostics.readiness)}</StatusPill>

@@ -16,6 +16,13 @@ function gradeTone(grade: OptionReview["grade"]): "ok" | "warn" | "risk" {
   return "risk";
 }
 
+function statusLabel(status: OptionReview["items"][number]["status"]) {
+  if (status === "excellent") return "优秀";
+  if (status === "good") return "良好";
+  if (status === "watch") return "关注";
+  return "风险";
+}
+
 function percent(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(0)}%` : "-";
 }
@@ -39,7 +46,7 @@ export function OptionReviewPanel({ review }: { review: OptionReview | null }) {
     { label: "FAR", value: percent(review.metrics.far_utilization) },
     { label: "密度", value: percent(review.metrics.density_ratio_to_cap) },
     { label: "毛利", value: percent(review.metrics.gross_margin_ratio) },
-    { label: "户均", value: `${number(review.metrics.avg_unit_area_estimate_m2)} m2` }
+    { label: "户均", value: `${number(review.metrics.avg_unit_area_estimate_m2)} ㎡` }
   ];
 
   return (
@@ -47,11 +54,11 @@ export function OptionReviewPanel({ review }: { review: OptionReview | null }) {
       <div className="shrink-0">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="page-kicker">DESIGN REVIEW</p>
+            <p className="page-kicker">方案评审</p>
             <h2 className="section-title mt-1">方案质量评审</h2>
           </div>
           <div className="flex items-center gap-2">
-            <StatusPill tone={gradeTone(review.grade)}>Grade {review.grade}</StatusPill>
+            <StatusPill tone={gradeTone(review.grade)}>评级 {review.grade}</StatusPill>
             <StatusPill>{review.overall_score}/100</StatusPill>
           </div>
         </div>
@@ -76,7 +83,7 @@ export function OptionReviewPanel({ review }: { review: OptionReview | null }) {
                   <h3 className="text-sm font-bold text-ink">{item.label}</h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <StatusPill tone={toneFor(item.status)}>{item.status}</StatusPill>
+                  <StatusPill tone={toneFor(item.status)}>{statusLabel(item.status)}</StatusPill>
                   <span className="text-xs font-black text-slate-500">{item.score}</span>
                 </div>
               </div>

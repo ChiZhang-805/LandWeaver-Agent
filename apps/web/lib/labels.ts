@@ -15,9 +15,13 @@ export function riskLabel(value: PlanningBrief["risk_preference"] | string) {
 }
 
 export function prototypeTypeLabel(value: BuildingPrototype["type"] | string | null | undefined) {
-  if (value === "tower") return "高层塔楼";
-  if (value === "slab") return "板式住宅";
-  if (value === "villa") return "低密别墅";
-  if (value === "podium") return "配套裙房";
+  const normalized = String(value || "")
+    .replace(/^PrototypeType\./, "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "tower") return "高层塔楼";
+  if (normalized === "slab") return "板式住宅";
+  if (normalized === "villa") return "低密别墅";
+  if (normalized === "podium") return "配套裙房";
   return value || "-";
 }

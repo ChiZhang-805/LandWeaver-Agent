@@ -4,16 +4,22 @@ import { Blocks, ChartNoAxesCombined, ClipboardList, Database, FileText, FolderK
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const steps = [
-  { label: "指挥", href: "command", icon: ClipboardList },
+const flowSteps = [
   { label: "地块", href: "parcel", icon: Map },
   { label: "简报", href: "brief", icon: FileText },
-  { label: "数据", href: "data", icon: Database },
   { label: "约束", href: "constraints", icon: Ruler },
   { label: "原型", href: "prototypes", icon: Blocks },
   { label: "生成", href: "generate", icon: Sparkles },
   { label: "方案", href: "options", icon: ChartNoAxesCombined },
   { label: "视觉", href: "visual", icon: Palette }
+];
+
+const utilityLinks = [
+  { label: "首页", href: "/", icon: Home },
+  { label: "项目", href: "/projects", icon: FolderKanban },
+  { label: "设置", href: "/settings", icon: Settings },
+  { label: "指挥", href: "command", icon: ClipboardList },
+  { label: "数据", href: "data", icon: Database }
 ];
 
 export function Shell({ projectId, children }: { projectId?: string; children: React.ReactNode }) {
@@ -32,32 +38,8 @@ export function Shell({ projectId, children }: { projectId?: string; children: R
             </span>
           </Link>
           <nav className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1 lg:justify-end">
-            <Link title="首页" href="/" className="icon-button border border-line bg-white text-ink">
-              <Home size={16} aria-hidden />
-              <span>首页</span>
-            </Link>
-            <Link
-              title="项目"
-              href="/projects"
-              className={`icon-button border ${
-                pathname === "/projects" ? "border-teal bg-teal text-white" : "border-line bg-white text-ink hover:border-teal"
-              }`}
-            >
-              <FolderKanban size={16} aria-hidden />
-              <span>项目</span>
-            </Link>
-            <Link
-              title="设置"
-              href="/settings"
-              className={`icon-button border ${
-                pathname === "/settings" ? "border-teal bg-teal text-white" : "border-line bg-white text-ink hover:border-teal"
-              }`}
-            >
-              <Settings size={16} aria-hidden />
-              <span>设置</span>
-            </Link>
             {projectId
-              ? steps.map((step) => {
+              ? flowSteps.map((step) => {
                   const Icon = step.icon;
                   const href = `/projects/${projectId}/${step.href}`;
                   const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -74,12 +56,52 @@ export function Shell({ projectId, children }: { projectId?: string; children: R
                     </Link>
                   );
                 })
-              : null}
+              : utilityLinks.slice(0, 3).map((link) => {
+                  const Icon = link.icon;
+                  const active = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.label}
+                      href={link.href}
+                      className={`icon-button border ${
+                        active ? "border-teal bg-teal text-white" : "border-line bg-white text-ink hover:border-teal"
+                      }`}
+                    >
+                      <Icon size={16} aria-hidden />
+                      <span>{link.label}</span>
+                    </Link>
+                  );
+                })}
           </nav>
         </div>
       </header>
-      <div data-shell-content className="mx-auto min-h-0 w-full max-w-7xl flex-1 overflow-y-auto overflow-x-hidden px-5 py-5">
-        {children}
+      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-1 overflow-hidden px-5 print:block">
+        {projectId ? (
+          <aside className="hidden w-32 shrink-0 overflow-y-auto border-r border-line/70 py-5 pr-3 xl:block print:hidden">
+            <nav className="grid gap-2">
+              {utilityLinks.map((link) => {
+                const Icon = link.icon;
+                const href = link.href.startsWith("/") ? link.href : `/projects/${projectId}/${link.href}`;
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={link.label}
+                    href={href}
+                    className={`flex min-h-10 items-center gap-2 rounded-[8px] border px-3 text-sm font-bold transition ${
+                      active ? "border-teal bg-teal text-white" : "border-line bg-white text-ink hover:border-teal"
+                    }`}
+                  >
+                    <Icon size={15} aria-hidden />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
+        ) : null}
+        <div data-shell-content className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-5 xl:pl-5">
+          {children}
+        </div>
       </div>
     </main>
   );

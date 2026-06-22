@@ -50,7 +50,7 @@ export default function OptionsPage() {
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="page-kicker">OPTIONS</p>
+            <p className="page-kicker">方案</p>
             <h1 className="page-title mt-2">方案对比</h1>
             <p className="page-copy mt-2">强排结果、指标和收益表现。</p>
           </div>
@@ -110,7 +110,7 @@ export default function OptionsPage() {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="min-w-0">
                                 <StatusPill tone={tone}>{strategyLabel(option.strategy)}</StatusPill>
-                                <p className="mt-2 text-xs font-bold text-slate-500">score {option.score.toFixed(1)}</p>
+                                <p className="mt-2 text-xs font-bold text-slate-500">评分 {option.score.toFixed(1)}</p>
                               </div>
                               <Link
                                 title="方案详情"

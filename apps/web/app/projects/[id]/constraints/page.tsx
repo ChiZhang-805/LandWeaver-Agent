@@ -132,8 +132,8 @@ export default function ConstraintsPage() {
           <div className="panel p-5">
             <h2 className="section-title">经济假设</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <Field label="售价 元/m2" value={form.assumptions.avg_selling_price_cny_per_m2} onChange={(value) => update("assumptions.avg_selling_price_cny_per_m2", value)} />
-              <Field label="建安 元/m2" value={form.assumptions.hard_cost_cny_per_m2} onChange={(value) => update("assumptions.hard_cost_cny_per_m2", value)} />
+              <Field label="售价 元/㎡" value={form.assumptions.avg_selling_price_cny_per_m2} onChange={(value) => update("assumptions.avg_selling_price_cny_per_m2", value)} />
+              <Field label="建安 元/㎡" value={form.assumptions.hard_cost_cny_per_m2} onChange={(value) => update("assumptions.hard_cost_cny_per_m2", value)} />
               <Field label="地价 元" value={form.assumptions.land_cost_cny} onChange={(value) => update("assumptions.land_cost_cny", value)} />
               <Field label="软成本率" value={form.assumptions.soft_cost_ratio} onChange={(value) => update("assumptions.soft_cost_ratio", value)} />
               <Field label="税费率" value={form.assumptions.tax_ratio} onChange={(value) => update("assumptions.tax_ratio", value)} />
