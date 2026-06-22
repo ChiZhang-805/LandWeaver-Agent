@@ -5,6 +5,14 @@ import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { clearOpenAISettings, getOpenAISettings, getStoredOpenAISettings, saveOpenAISettings } from "@/lib/api";
+import {
+  CUSTOM_MODEL_VALUE,
+  FAST_MODEL_OPTIONS,
+  OpenAIModelOption,
+  TEXT_MODEL_OPTIONS,
+  modelDescription,
+  modelSelectValue
+} from "@/lib/openaiModels";
 import type { OpenAISettingsStatus } from "@/lib/types";
 
 function sourceLabel(source?: OpenAISettingsStatus["source"]) {
@@ -12,6 +20,50 @@ function sourceLabel(source?: OpenAISettingsStatus["source"]) {
   if (source === "web") return "网页设置";
   if (source === "env") return "环境变量";
   return "Mock";
+}
+
+function ModelSelect({
+  label,
+  value,
+  options,
+  onChange
+}: {
+  label: string;
+  value: string;
+  options: OpenAIModelOption[];
+  onChange: (value: string) => void;
+}) {
+  const selected = modelSelectValue(value, options);
+
+  return (
+    <label className="grid gap-1.5 text-sm font-semibold text-ink">
+      <span className="text-xs text-slate-500">{label}</span>
+      <select
+        className="input-control"
+        value={selected}
+        onChange={(event) => onChange(event.target.value === CUSTOM_MODEL_VALUE ? "" : event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+        <option value={CUSTOM_MODEL_VALUE}>自定义模型 ID</option>
+      </select>
+      {selected === CUSTOM_MODEL_VALUE ? (
+        <input
+          className="input-control font-mono text-sm"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="例如 gpt-5.5"
+          autoComplete="off"
+          spellCheck={false}
+        />
+      ) : (
+        <span className="text-xs font-medium leading-5 text-slate-500">{modelDescription(value, options)}</span>
+      )}
+    </label>
+  );
 }
 
 export default function SettingsPage() {
@@ -42,9 +94,15 @@ export default function SettingsPage() {
 
   async function save() {
     try {
+      const cleanedModelText = modelText.trim();
+      const cleanedModelFast = modelFast.trim();
+      if (!cleanedModelText || !cleanedModelFast) {
+        setStatus("请先选择或填写完整模型 ID");
+        return;
+      }
       const payload: { api_key?: string; model_text?: string; model_fast?: string } = {
-        model_text: modelText,
-        model_fast: modelFast
+        model_text: cleanedModelText,
+        model_fast: cleanedModelFast
       };
       if (apiKey.trim()) payload.api_key = apiKey.trim();
       const next = await saveOpenAISettings(payload);
@@ -139,14 +197,8 @@ export default function SettingsPage() {
             </label>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-1.5 text-sm font-semibold text-ink">
-                <span className="text-xs text-slate-500">解释模型</span>
-                <input className="input-control" value={modelText} onChange={(event) => setModelText(event.target.value)} />
-              </label>
-              <label className="grid gap-1.5 text-sm font-semibold text-ink">
-                <span className="text-xs text-slate-500">简报模型</span>
-                <input className="input-control" value={modelFast} onChange={(event) => setModelFast(event.target.value)} />
-              </label>
+              <ModelSelect label="解释模型" value={modelText} options={TEXT_MODEL_OPTIONS} onChange={setModelText} />
+              <ModelSelect label="简报模型" value={modelFast} options={FAST_MODEL_OPTIONS} onChange={setModelFast} />
             </div>
 
             <div className="flex flex-wrap gap-2">

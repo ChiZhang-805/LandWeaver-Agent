@@ -115,13 +115,13 @@ pytest
 - `DATABASE_URL`：PostgreSQL/PostGIS 连接串。
 - `REDIS_URL`：Redis/RQ 连接串。
 - `OPENAI_API_KEY`：为空时使用 deterministic mock。
-- `OPENAI_MODEL_TEXT`：方案解释模型，默认 `gpt-5.5`。
-- `OPENAI_MODEL_FAST`：PlanningBrief 抽取模型，默认 `gpt-5.4-mini`。
+- `OPENAI_MODEL_TEXT`：方案解释模型，默认 `gpt-5.5`；网页端可按当前浏览器覆盖。
+- `OPENAI_MODEL_FAST`：PlanningBrief 抽取模型，默认 `gpt-5.4-mini`；网页端可按当前浏览器覆盖。
 - `LANDWEAVER_STORAGE_DIR`：导出文件目录。
 - `LANDWEAVER_API_BASE_URL`：Next.js `/api` 代理目标，默认 `http://127.0.0.1:8001`。
 - `NEXT_PUBLIC_API_BASE_URL`：可选浏览器直连 API 地址，默认留空。
 
-网页端 Key 入口在 `/settings`。浏览器保存的 Key 不会写入 Render 或后端文件；后端只在当前请求里读取 `X-OpenAI-API-Key`、`X-OpenAI-Model-Text` 和 `X-OpenAI-Model-Fast` 请求头。
+网页端 Key 和模型入口在 `/settings`。浏览器保存的 Key 与模型选择不会写入 Render 或后端文件；后端只在当前请求里读取 `X-OpenAI-API-Key`、`X-OpenAI-Model-Text` 和 `X-OpenAI-Model-Fast` 请求头。
 
 ## OpenAI API 使用位置
 
