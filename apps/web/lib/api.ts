@@ -32,6 +32,15 @@ function apiUrl(path: string) {
   return `${API_BASE}${path}`;
 }
 
+function summarizeResponseError(status: number, statusText: string, contentType: string | null, detail: string) {
+  const trimmed = detail.trim();
+  if (contentType?.includes("text/html") || trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html")) {
+    return `后端 API 暂时不可用（HTTP ${status}${statusText ? ` ${statusText}` : ""}）。如果使用 Render Free plan，可能正在冷启动；稍后刷新或检查 landweaver-api 服务状态。`;
+  }
+  if (!trimmed) return `Request failed: ${status}${statusText ? ` ${statusText}` : ""}`;
+  return trimmed.length > 280 ? `${trimmed.slice(0, 280)}...` : trimmed;
+}
+
 export function getStoredOpenAISettings() {
   if (typeof window === "undefined") return { apiKey: "", modelText: "", modelFast: "" };
   try {
@@ -102,7 +111,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (!response.ok) {
     const detail = await response.text();
-    let message = detail || `Request failed: ${response.status}`;
+    let message = summarizeResponseError(
+      response.status,
+      response.statusText,
+      response.headers.get("content-type"),
+      detail
+    );
     try {
       const parsed = JSON.parse(detail) as { detail?: unknown };
       if (typeof parsed.detail === "string") {
@@ -121,6 +135,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       // Keep the raw response body when it is not JSON.
     }
     throw new Error(message);
+  }
+  const contentType = response.headers.get("content-type");
+  if (!contentType?.includes("application/json")) {
+    const detail = await response.text();
+    throw new Error(summarizeResponseError(response.status, response.statusText, contentType, detail));
   }
   return response.json() as Promise<T>;
 }

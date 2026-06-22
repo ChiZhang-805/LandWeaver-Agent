@@ -10,6 +10,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: CORS_ORIGINS
+        value: https://landweaver-web.onrender.com,http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:3010,http://127.0.0.1:3010,http://localhost:3011,http://127.0.0.1:3011
 
   - type: web
     name: landweaver-web
@@ -23,4 +25,6 @@ services:
       - key: NODE_VERSION
         value: 20.18.1
       - key: LANDWEAVER_API_BASE_URL
+        value: https://landweaver-api.onrender.com
+      - key: NEXT_PUBLIC_API_BASE_URL
         value: https://landweaver-api.onrender.com
