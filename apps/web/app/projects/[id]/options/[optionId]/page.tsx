@@ -216,87 +216,96 @@ export default function OptionDetailPage() {
               </div>
             </div>
           </div>
-          <div className="panel overflow-auto">
-            <table className="data-table min-w-[760px]">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3">原型</th>
-                  <th className="px-4 py-3">层数</th>
-                  <th className="px-4 py-3">高度</th>
-                  <th className="px-4 py-3">建面</th>
-                  <th className="px-4 py-3">户数</th>
-                  <th className="px-4 py-3">旋转</th>
-                  <th className="px-4 py-3">编辑</th>
-                </tr>
-              </thead>
-              <tbody>
-                {option.buildings.map((building, index) => (
-                  <tr key={`${building.prototype_id}-${index}`}>
-                    <td className="px-4 py-3 font-bold">{building.prototype_type || building.prototype_id}</td>
-                    <td className="px-4 py-3">{building.floors}</td>
-                    <td className="px-4 py-3">{building.height_m}m</td>
-                    <td className="px-4 py-3">{building.gfa_m2.toLocaleString("zh-CN")} m2</td>
-                    <td className="px-4 py-3">{building.units}</td>
-                    <td className="px-4 py-3">{building.rotation_deg}°</td>
-                    <td className="px-4 py-3">
-                      <label className="inline-flex items-center gap-2 text-xs font-bold text-slate-600">
-                        <input type="checkbox" checked={removeIndexes.includes(index)} onChange={() => toggleRemove(index)} />
-                        删除后派生
-                      </label>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="panel p-4">
+            <h2 className="section-title mb-3">楼栋清单</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              {option.buildings.map((building, index) => (
+                <article key={`${building.prototype_id}-${index}`} className="rounded-[8px] border border-line/80 bg-white p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="break-words font-bold text-ink">{building.prototype_type || building.prototype_id}</h3>
+                      <p className="mt-1 text-xs font-semibold text-slate-500">旋转 {building.rotation_deg}°</p>
+                    </div>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-[8px] border border-line bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+                      <input type="checkbox" checked={removeIndexes.includes(index)} onChange={() => toggleRemove(index)} />
+                      删除后派生
+                    </label>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">层数</p>
+                      <p className="mt-1 font-semibold text-ink">{building.floors}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">高度</p>
+                      <p className="mt-1 font-semibold text-ink">{building.height_m}m</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">建面</p>
+                      <p className="mt-1 font-semibold text-ink">{building.gfa_m2.toLocaleString("zh-CN")} m2</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">户数</p>
+                      <p className="mt-1 font-semibold text-ink">{building.units}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
           {option.metrics.product_breakdown && typeof option.metrics.product_breakdown === "object" ? (
-            <div className="panel overflow-auto">
-              <table className="data-table min-w-[680px]">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3">产品</th>
-                    <th className="px-4 py-3">楼栋</th>
-                    <th className="px-4 py-3">建面</th>
-                    <th className="px-4 py-3">户数</th>
-                    <th className="px-4 py-3">货值</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(option.metrics.product_breakdown as Record<string, { building_count: number; gfa_m2: number; units: number; revenue_cny: number }>).map(([key, value]) => (
-                    <tr key={key} className="border-t border-line">
-                      <td className="px-4 py-3 font-semibold">{key}</td>
-                      <td className="px-4 py-3">{value.building_count}</td>
-                      <td className="px-4 py-3">{value.gfa_m2.toLocaleString("zh-CN")} m2</td>
-                      <td className="px-4 py-3">{value.units}</td>
-                      <td className="px-4 py-3">{money(value.revenue_cny)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="panel p-4">
+              <h2 className="section-title mb-3">产品拆分</h2>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {Object.entries(option.metrics.product_breakdown as Record<string, { building_count: number; gfa_m2: number; units: number; revenue_cny: number }>).map(([key, value]) => (
+                  <article key={key} className="rounded-[8px] border border-line/80 bg-white p-4">
+                    <h3 className="break-words font-bold text-ink">{key}</h3>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">楼栋</p>
+                        <p className="mt-1 font-semibold text-ink">{value.building_count}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">户数</p>
+                        <p className="mt-1 font-semibold text-ink">{value.units}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">建面</p>
+                        <p className="mt-1 font-semibold text-ink">{value.gfa_m2.toLocaleString("zh-CN")} m2</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">货值</p>
+                        <p className="mt-1 font-semibold text-ink">{money(value.revenue_cny)}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           ) : null}
           {sensitivity.length ? (
-            <div className="panel overflow-auto">
-              <table className="data-table min-w-[680px]">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3">变量</th>
-                    <th className="px-4 py-3">扰动</th>
-                    <th className="px-4 py-3">毛利率</th>
-                    <th className="px-4 py-3">毛利</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sensitivity.map((scenario, index) => (
-                    <tr key={`${scenario.variable}-${scenario.delta}-${index}`} className="border-t border-line">
-                      <td className="px-4 py-3 font-semibold">{variableLabel(scenario.variable)}</td>
-                      <td className="px-4 py-3">{(scenario.delta * 100).toFixed(0)}%</td>
-                      <td className="px-4 py-3">{(scenario.gross_margin_ratio * 100).toFixed(1)}%</td>
-                      <td className="px-4 py-3">{money(scenario.gross_margin_cny)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="panel p-4">
+              <h2 className="section-title mb-3">敏感性</h2>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {sensitivity.map((scenario, index) => (
+                  <article key={`${scenario.variable}-${scenario.delta}-${index}`} className="rounded-[8px] border border-line/80 bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="font-bold text-ink">{variableLabel(scenario.variable)}</h3>
+                      <StatusPill tone={scenario.delta < 0 ? "warn" : "ok"}>{(scenario.delta * 100).toFixed(0)}%</StatusPill>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">毛利率</p>
+                        <p className="mt-1 font-semibold text-ink">{(scenario.gross_margin_ratio * 100).toFixed(1)}%</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500">毛利</p>
+                        <p className="mt-1 font-semibold text-ink">{money(scenario.gross_margin_cny)}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           ) : null}
         </div>

@@ -171,7 +171,10 @@ export default function PrototypesPage() {
     const query = templateQuery.trim().toLowerCase();
     if (!query) return true;
     const keywords = prototypeKeywords[prototype.type].join(" ").toLowerCase();
-    return `${prototype.type} ${keywords}`.includes(query);
+    const searchable = `${prototype.type} ${keywords}`;
+    const compactSearchable = searchable.replace(/\s+/g, "");
+    const compactQuery = query.replace(/\s+/g, "");
+    return searchable.includes(query) || compactSearchable.includes(compactQuery);
   });
 
   return (

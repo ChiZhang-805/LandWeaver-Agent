@@ -102,23 +102,28 @@ export default function OptionReportPage() {
               <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-700">{explanation}</p>
             </div>
           </section>
-          <section className="overflow-auto">
+          <section>
             <h3 className="mb-3 font-semibold">敏感性</h3>
-            <table className="data-table min-w-[680px]">
-              <thead>
-                <tr><th className="px-4 py-3">变量</th><th className="px-4 py-3">扰动</th><th className="px-4 py-3">毛利率</th><th className="px-4 py-3">毛利</th></tr>
-              </thead>
-              <tbody>
-                {sensitivity.map((item, index) => (
-                  <tr key={`${item.variable}-${index}`} className="border-t border-line">
-                    <td className="px-4 py-3">{item.variable === "avg_selling_price_cny_per_m2" ? "售价" : "建安成本"}</td>
-                    <td className="px-4 py-3">{(item.delta * 100).toFixed(0)}%</td>
-                    <td className="px-4 py-3">{(item.gross_margin_ratio * 100).toFixed(1)}%</td>
-                    <td className="px-4 py-3">{money(item.gross_margin_cny)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {sensitivity.map((item, index) => (
+                <article key={`${item.variable}-${index}`} className="rounded-[8px] border border-line/80 bg-white p-4 print:break-inside-avoid">
+                  <div className="flex items-center justify-between gap-3">
+                    <h4 className="font-bold text-ink">{item.variable === "avg_selling_price_cny_per_m2" ? "售价" : "建安成本"}</h4>
+                    <StatusPill tone={item.delta < 0 ? "warn" : "ok"}>{(item.delta * 100).toFixed(0)}%</StatusPill>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">毛利率</p>
+                      <p className="mt-1 font-semibold text-ink">{(item.gross_margin_ratio * 100).toFixed(1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-500">毛利</p>
+                      <p className="mt-1 font-semibold text-ink">{money(item.gross_margin_cny)}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </section>
         </article>
       ) : (

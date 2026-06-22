@@ -187,13 +187,15 @@ a:focus-visible {
   font-size: 0.74rem;
   font-weight: 800;
   letter-spacing: 0;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .data-table td {
   border-top: 1px solid var(--line);
   padding: 14px 16px;
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 
 .data-table tbody tr {

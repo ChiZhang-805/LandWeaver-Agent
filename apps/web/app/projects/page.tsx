@@ -141,62 +141,56 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      <div className="panel overflow-auto">
-        <table className="data-table min-w-[900px]">
-          <thead>
-            <tr>
-              <th className="px-4 py-3">项目</th>
-              <th className="px-4 py-3">城市</th>
-              <th className="px-4 py-3">状态</th>
-              <th className="px-4 py-3">创建时间</th>
-              <th className="px-4 py-3">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.length ? (
-              projects.map((project) => (
-                <tr key={project.id} className="border-t border-line">
-                  <td className="px-4 py-3">
-                    <div className="font-bold text-ink">{project.title}</div>
-                    <div className="mt-1 text-xs font-semibold text-slate-500">{project.id}</div>
-                  </td>
-                  <td className="px-4 py-3">{project.city}</td>
-                  <td className="px-4 py-3">
-                    <StatusPill tone={project.status === "archived" ? "neutral" : "ok"}>{statusLabel(project.status)}</StatusPill>
-                  </td>
-                  <td className="px-4 py-3">{date(project.created_at)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Link title="打开" className="icon-button border border-line bg-white" href={`/projects/${project.id}/parcel`}>
-                        <FolderOpen size={15} aria-hidden />
-                      </Link>
-                      <button title="复制" className="icon-button border border-line bg-white" onClick={() => duplicate(project)}>
-                        <Copy size={15} aria-hidden />
-                      </button>
-                      <button title="归档/恢复" className="icon-button border border-line bg-white" onClick={() => archive(project)}>
-                        <Archive size={15} aria-hidden />
-                      </button>
-                      <button title="删除" className="icon-button border border-line bg-white text-rose" onClick={() => remove(project)}>
-                        <Trash2 size={15} aria-hidden />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td className="px-4 py-6" colSpan={5}>
-                  <div className="empty-state">
-                    <div>
-                      <p className="font-bold text-ink">{loading ? "项目加载中" : "暂无项目"}</p>
-                      <p className="mt-2 text-sm text-slate-500">当前没有项目记录。</p>
+      <div className="panel p-4">
+        {projects.length ? (
+          <div className="grid gap-3">
+            {projects.map((project) => (
+              <article key={project.id} className="rounded-[8px] border border-line/80 bg-white p-4">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_150px_120px_170px_auto] lg:items-center">
+                  <div className="min-w-0">
+                    <div className="break-words font-bold text-ink">{project.title}</div>
+                    <div className="mt-1 break-all text-xs font-semibold text-slate-500">{project.id}</div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 lg:hidden">城市</p>
+                    <p className="mt-1 font-semibold text-ink lg:mt-0">{project.city}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 lg:hidden">状态</p>
+                    <div className="mt-1 lg:mt-0">
+                      <StatusPill tone={project.status === "archived" ? "neutral" : "ok"}>{statusLabel(project.status)}</StatusPill>
                     </div>
                   </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  <div>
+                    <p className="text-xs font-bold text-slate-500 lg:hidden">创建时间</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-600 lg:mt-0">{date(project.created_at)}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 lg:justify-end">
+                    <Link title="打开" className="icon-button border border-line bg-white" href={`/projects/${project.id}/parcel`}>
+                      <FolderOpen size={15} aria-hidden />
+                    </Link>
+                    <button title="复制" className="icon-button border border-line bg-white" onClick={() => duplicate(project)}>
+                      <Copy size={15} aria-hidden />
+                    </button>
+                    <button title="归档/恢复" className="icon-button border border-line bg-white" onClick={() => archive(project)}>
+                      <Archive size={15} aria-hidden />
+                    </button>
+                    <button title="删除" className="icon-button border border-line bg-white text-rose" onClick={() => remove(project)}>
+                      <Trash2 size={15} aria-hidden />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <div>
+              <p className="font-bold text-ink">{loading ? "项目加载中" : "暂无项目"}</p>
+              <p className="mt-2 text-sm text-slate-500">当前没有项目记录。</p>
+            </div>
+          </div>
+        )}
       </div>
       {status ? <p className={`mt-3 status-message ${status.includes("失败") || status.includes("请填写") ? "danger-message" : ""}`}>{status}</p> : null}
     </Shell>

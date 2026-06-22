@@ -15,7 +15,10 @@ DEFAULT_STORE_PATH = Path(__file__).resolve().parents[2] / "storage" / "store.js
 
 
 def _store_path() -> Path:
-    return Path(os.getenv("LANDWEAVER_STORE_PATH", DEFAULT_STORE_PATH))
+    if explicit_path := os.getenv("LANDWEAVER_STORE_PATH"):
+        return Path(explicit_path)
+    storage_dir = Path(os.getenv("LANDWEAVER_STORAGE_DIR", DEFAULT_STORE_PATH.parent))
+    return storage_dir / "store.json"
 
 
 @dataclass
