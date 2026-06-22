@@ -44,5 +44,5 @@ apps/api/app/data/data_library/
 ```
 
 注意：
-- 大型原始下载不要放在这里，放到仓库根目录的 `data/raw/` 或 `data/external/`，这些路径已被 `.gitignore` 忽略。
+- 大型原始下载不要放在这个 Git 仓库里，统一放到工作区公共目录 `/home/chi/Project/data/raw/landweaver/`。
 - 这个目录只放要跟随 GitHub/Render 部署的小体量样本，例如 100 条 GeoJSON/PNG 缩略图和对应 manifest。

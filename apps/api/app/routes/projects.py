@@ -85,7 +85,7 @@ def search_land_data_library(
         pattern="^(parcel|zoning|market|cost|prototype|mobility|context)$",
     ),
     city: str | None = Query(default=None, max_length=80),
-    limit: int = Query(default=24, ge=1, le=80),
+    limit: int = Query(default=24, ge=1, le=120),
 ) -> DataLibrarySearchResponse:
     return DataLibrarySearchResponse(
         sources=list_data_library_sources(),

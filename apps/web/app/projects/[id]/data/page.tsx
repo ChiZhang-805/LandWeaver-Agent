@@ -132,7 +132,7 @@ export default function DataLibraryPage() {
           query,
           datasetType,
           city,
-          limit: 48
+          limit: 100
         });
         setItems(response.items);
         setSources(response.sources);

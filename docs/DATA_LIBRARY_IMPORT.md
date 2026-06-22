@@ -11,7 +11,7 @@
 - 产品原型
 - 交通与配套
 
-本轮已新增项目页 `项目 / 数据`，页面上方筛选、下方图库式卡片展示。后端支持从 `apps/api/app/data/data_library/manifest.json` 自动合并外部小样本。
+本轮已新增项目页 `项目 / 数据`，页面上方筛选、下方图库式卡片展示。当前已从 NYC PLUTO 全量关键字段 CSV 中抽取 100 条真实 tax lot 样本，并生成 100 张 SVG 缩略图。后端支持从 `apps/api/app/data/data_library/manifest.json` 自动合并外部小样本。
 
 ## 建议先接的数据
 
@@ -38,10 +38,11 @@
 
 ## 导入流程
 
-1. 原始下载放在根目录忽略路径：
+1. 原始下载放在工作区公共目录，不放进 Git 仓库：
 
 ```bash
-mkdir -p data/raw/overture data/raw/nyc_pluto
+mkdir -p /home/chi/Project/data/raw/landweaver/overture
+mkdir -p /home/chi/Project/data/raw/landweaver/nyc_pluto
 ```
 
 2. 标准化为小样本：
@@ -71,3 +72,20 @@ apps/api/app/data/data_library/
 - Market brief reasoner：把竞品去化和价格整理为投委会式结论。
 - Site context vision：根据卫星图/街景/总平图解释界面、噪声、可达性和风险。
 - Data librarian：自动检查外部数据字段缺失、单位不统一、城市名称混杂和重复样本。
+
+## 当前本地原始数据位置
+
+```text
+/home/chi/Project/data/raw/landweaver/nyc_pluto/
+  pluto_key_fields.csv      # NYC PLUTO 全量 tax lot 关键字段，约 859K 行
+  pluto_metadata.json
+  selected_100_bbl.json
+```
+
+产品检索样本位置：
+
+```text
+apps/api/app/data/data_library/
+  manifest.json             # 100 条 NYC PLUTO 样本记录
+  assets/                   # 100 张 SVG 检索缩略图
+```

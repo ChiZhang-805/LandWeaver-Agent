@@ -346,4 +346,4 @@ def search_data_library(
             )
         )
 
-    return sorted(results, key=lambda item: item.match_score, reverse=True)[: max(1, min(limit, 80))]
+    return sorted(results, key=lambda item: item.match_score, reverse=True)[: max(1, min(limit, 120))]
