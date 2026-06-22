@@ -1,27 +1,38 @@
 "use client";
 
-import { ArrowRight, WandSparkles } from "lucide-react";
+import { ArrowRight, Save } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { getProject, parseBrief } from "@/lib/api";
+import { riskLabel, strategyLabel } from "@/lib/labels";
 import type { PlanningBrief } from "@/lib/types";
 
 const sampleText = "改善型住宅，面向三口之家和轻奢换房客户，偏稳健，关注收益和风险平衡，户型以90-120平为主。";
+
+function unitLabel(value: string) {
+  return value.replace("m2", "㎡");
+}
 
 export default function BriefPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const [text, setText] = useState(sampleText);
   const [brief, setBrief] = useState<PlanningBrief | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
     getProject(projectId)
       .then((aggregate) => {
-        if (aggregate.brief) setBrief(aggregate.brief);
+        if (aggregate.brief) {
+          setBrief(aggregate.brief);
+          setIsSaved(true);
+        } else {
+          setIsSaved(false);
+        }
         setStatus("");
       })
       .catch((event) => {
@@ -29,12 +40,19 @@ export default function BriefPage() {
       });
   }, [projectId]);
 
+  function updateText(value: string) {
+    setText(value);
+    setIsSaved(false);
+  }
+
   async function submit() {
     try {
       const result = await parseBrief(projectId, text);
       setBrief(result);
+      setIsSaved(true);
       setStatus("已保存简报");
     } catch (event) {
+      setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "解析失败");
     }
   }
@@ -48,24 +66,31 @@ export default function BriefPage() {
           <p className="page-copy mt-2">客户、定位、户型和风险偏好。</p>
         </div>
         <div className="flex gap-2">
-          <button title="解析简报" className="icon-button bg-teal text-white" onClick={submit}>
-            <WandSparkles size={16} aria-hidden />
-            <span>解析</span>
+          <button title="保存简报" className="icon-button bg-teal text-white" onClick={submit}>
+            <Save size={16} aria-hidden />
+            <span>保存</span>
           </button>
-          <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/constraints`}>
-            <ArrowRight size={16} aria-hidden />
-            <span>下一步</span>
-          </Link>
+          {isSaved ? (
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/constraints`}>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </Link>
+          ) : (
+            <button className="icon-button border border-line bg-white" disabled>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </button>
+          )}
         </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <div className="panel p-5">
-          <label className="grid gap-2 text-sm font-semibold text-ink">
+        <div className="panel flex min-h-[360px] p-5">
+          <label className="flex min-h-0 flex-1 flex-col gap-2 text-sm font-semibold text-ink">
             <span className="section-title">开发需求</span>
             <textarea
-              className="textarea-control"
+              className="textarea-control min-h-[280px] flex-1 resize-y"
               value={text}
-              onChange={(event) => setText(event.target.value)}
+              onChange={(event) => updateText(event.target.value)}
             />
           </label>
         </div>
@@ -77,9 +102,9 @@ export default function BriefPage() {
                 <p className="mt-1 text-xs font-semibold text-slate-500">{brief.product_positioning}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <StatusPill tone="ok">{brief.strategy_preference}</StatusPill>
+                <StatusPill tone="ok">{strategyLabel(brief.strategy_preference)}</StatusPill>
                 <StatusPill tone={brief.risk_preference === "low" ? "ok" : brief.risk_preference === "medium" ? "warn" : "risk"}>
-                  risk {brief.risk_preference}
+                  {riskLabel(brief.risk_preference)}
                 </StatusPill>
               </div>
               <dl className="grid gap-3">
@@ -96,7 +121,7 @@ export default function BriefPage() {
                   <dd className="mt-2 flex flex-wrap gap-2">
                     {Object.entries(brief.unit_mix_targets).length ? (
                       Object.entries(brief.unit_mix_targets).map(([key, value]) => (
-                        <StatusPill key={key}>{key} {(value * 100).toFixed(0)}%</StatusPill>
+                        <StatusPill key={key}>{unitLabel(key)} {(value * 100).toFixed(0)}%</StatusPill>
                       ))
                     ) : (
                       <span className="text-slate-500">-</span>

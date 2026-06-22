@@ -118,6 +118,7 @@ export default function ParcelPage() {
   const [geojson, setGeojson] = useState<unknown>(null);
   const [dxfText, setDxfText] = useState("");
   const [draftPoint, setDraftPoint] = useState({ x: "", y: "" });
+  const [isSaved, setIsSaved] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -127,6 +128,9 @@ export default function ParcelPage() {
           setPoints(clonePoints(aggregate.parcel.boundary));
           setGeojson(null);
           setDxfText("");
+          setIsSaved(true);
+        } else {
+          setIsSaved(false);
         }
         setHistory([]);
         setStatus("");
@@ -142,6 +146,7 @@ export default function ParcelPage() {
     setGeojson(source.geojson ?? null);
     setDxfText(source.dxfText ?? "");
     setPoints(clonePoints(next));
+    setIsSaved(false);
   }
 
   function undoPoints() {
@@ -151,6 +156,7 @@ export default function ParcelPage() {
     setPoints(clonePoints(previous.points));
     setGeojson(previous.geojson);
     setDxfText(previous.dxfText);
+    setIsSaved(false);
     setStatus(history.length > 1 ? `已撤销，仍可返回 ${history.length - 1} 步` : "已返回到最初状态");
   }
 
@@ -196,8 +202,10 @@ export default function ParcelPage() {
         projectId,
         geojson ? { geojson, source: "geojson" } : dxfText ? { dxf_text: dxfText, source: "dxf" } : { points, source: "manual" }
       );
+      setIsSaved(true);
       setStatus(`已保存 ${parcel.area_m2.toLocaleString("zh-CN")} m2`);
     } catch (event) {
+      setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "保存失败");
     }
   }
@@ -242,10 +250,17 @@ export default function ParcelPage() {
             <Save size={16} aria-hidden />
             <span>保存</span>
           </button>
-          <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/brief`}>
-            <ArrowRight size={16} aria-hidden />
-            <span>下一步</span>
-          </Link>
+          {isSaved ? (
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/brief`}>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </Link>
+          ) : (
+            <button className="icon-button border border-line bg-white" disabled>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </button>
+          )}
         </div>
       </div>
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_430px]">
@@ -265,7 +280,7 @@ export default function ParcelPage() {
                 </div>
                 <div className="rounded-[8px] border border-line bg-white p-3">
                   <p className="text-xs font-bold text-slate-500">来源</p>
-                  <p className="mt-1 text-xl font-black text-ink">{dxfText ? "DXF" : geojson ? "GeoJSON" : "Manual"}</p>
+                  <p className="mt-1 text-xl font-black text-ink">{dxfText ? "DXF" : geojson ? "GeoJSON" : "手动"}</p>
                 </div>
               </div>
             </div>

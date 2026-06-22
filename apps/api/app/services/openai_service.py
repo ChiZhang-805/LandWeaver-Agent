@@ -35,8 +35,6 @@ def _mock_brief(user_text: str) -> PlanningBrief:
 
 def _fallback_brief(user_text: str, reason: str | None = None) -> PlanningBrief:
     brief = _mock_brief(user_text)
-    if reason:
-        brief.notes = f"OpenAI 解析暂不可用，已使用本地解析兜底。原因：{reason}。{brief.notes}"
     return brief
 
 
@@ -132,10 +130,8 @@ def _fallback_explanation(option_metrics: dict[str, Any], violations: list[str],
     margin = _metric_number(option_metrics, "gross_margin_ratio")
     risk_text = "；".join(risk_flags) if risk_flags else "未发现高优先级风险提示"
     violation_text = "；".join(violations) if violations else "未发现硬约束违规"
-    fallback_note = f"OpenAI 解释暂不可用，已使用本地解释兜底。原因：{reason}。\n" if reason else ""
     return (
         f"{disclaimer}\n"
-        f"{fallback_note}"
         f"该方案容积率约 {far:.2f}，建筑密度约 {density:.1%}，毛利率约 {margin:.1%}。"
         f"{violation_text}。风险提示：{risk_text}。"
     )
@@ -243,7 +239,7 @@ def _visual_design_response_schema() -> dict[str, Any]:
     }
 
 
-def _fallback_visual_design(context: dict[str, Any], payload: VisualDesignRequest, reason: str | None = None) -> VisualDesignPackage:
+def _fallback_visual_design(context: dict[str, Any], payload: VisualDesignRequest) -> VisualDesignPackage:
     project = context.get("project") or {}
     brief = context.get("brief") or {}
     option = context.get("option") or {}
@@ -266,8 +262,6 @@ def _fallback_visual_design(context: dict[str, Any], payload: VisualDesignReques
     if isinstance(score, (int, float)):
         quantitative_line.append(f"方案评审约 {score:.0f} 分")
     base_facts = "，".join(quantitative_line) if quantitative_line else "当前仍处于概念输入阶段"
-    fallback_note = f"OpenAI 视觉设计暂不可用，已使用本地设计包兜底。原因：{reason}。" if reason else "使用本地规则生成视觉设计包。"
-
     prompts = [
         (
             "总体鸟瞰",
@@ -291,7 +285,7 @@ def _fallback_visual_design(context: dict[str, Any], payload: VisualDesignReques
         option_id=context.get("option_id"),
         source="fallback",
         design_title=f"{city}温暖都会社区",
-        concept_statement=f"围绕{customer}和{positioning}，以“清晰体块、温暖材质、可达公共空间”为视觉主线。{base_facts}，视觉表达应强调方案真实强排骨架，而不是额外增减楼栋。{fallback_note}",
+        concept_statement=f"围绕{customer}和{positioning}，以“清晰体块、温暖材质、可达公共空间”为视觉主线。{base_facts}，视觉表达应强调方案真实强排骨架，而不是额外增减楼栋。",
         style_keywords=["现代高端", "轻奢改善", "温暖社区", "清晰体块", "低饱和材质"],
         architectural_style="建筑表达以简洁竖向线条、浅暖石材基座、克制金属收边和大面玻璃为主，控制装饰密度，让体块秩序和入口尺度成为主要识别点。",
         landscape_strategy="景观以一条连续归家动线串联入口前场、中央花园和口袋活动场地，形成可步行、可停留、可展示的社区公共空间。",
@@ -332,7 +326,7 @@ def _fallback_visual_design(context: dict[str, Any], payload: VisualDesignReques
 def _openai_visual_design_package(context: dict[str, Any], payload: VisualDesignRequest, settings: dict[str, Any]) -> VisualDesignPackage:
     from openai import OpenAI
 
-    client = OpenAI(api_key=settings["api_key"], timeout=18.0)
+    client = OpenAI(api_key=settings["api_key"], timeout=45.0)
     response = client.responses.create(
         model=settings["model_text"],
         input=[
@@ -388,15 +382,15 @@ def generate_visual_design_package(context: dict[str, Any], payload: VisualDesig
     if not settings["api_key"]:
         return _fallback_visual_design(context, payload)
     if monotonic() < _VISUAL_DESIGN_OPENAI_DISABLED_UNTIL:
-        return _fallback_visual_design(context, payload, "OpenAICircuitBreaker")
+        return _fallback_visual_design(context, payload)
 
     future = _VISUAL_DESIGN_EXECUTOR.submit(_openai_visual_design_package, context, payload, settings)
     try:
-        package = future.result(timeout=24.0)
+        package = future.result(timeout=55.0)
         _VISUAL_DESIGN_OPENAI_DISABLED_UNTIL = 0.0
         return package
     except FutureTimeoutError:
-        _VISUAL_DESIGN_OPENAI_DISABLED_UNTIL = monotonic() + 120.0
-        return _fallback_visual_design(context, payload, "OpenAITimeout")
-    except Exception as exc:
-        return _fallback_visual_design(context, payload, type(exc).__name__)
+        _VISUAL_DESIGN_OPENAI_DISABLED_UNTIL = monotonic() + 30.0
+        return _fallback_visual_design(context, payload)
+    except Exception:
+        return _fallback_visual_design(context, payload)

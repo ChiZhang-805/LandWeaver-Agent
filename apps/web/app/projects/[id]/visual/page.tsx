@@ -8,6 +8,7 @@ import { OptionCanvas } from "@/components/OptionCanvas";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { createVisualDesign, getProject } from "@/lib/api";
+import { strategyLabel } from "@/lib/labels";
 import type { ProjectAggregate, VisualDesignPackage } from "@/lib/types";
 
 const defaultStyle = "现代高端、轻奢改善、温暖社区感，避免过度商业化，强调真实强排骨架和可达公共空间。";
@@ -16,6 +17,10 @@ function audienceLabel(value: "internal_review" | "investment_committee" | "desi
   if (value === "investment_committee") return "投委会";
   if (value === "internal_review") return "内部评审";
   return "设计汇报";
+}
+
+function sourceLabel(value: VisualDesignPackage["source"]) {
+  return value === "openai" ? "OpenAI" : "本地生成";
 }
 
 export default function VisualDesignPage() {
@@ -61,7 +66,7 @@ export default function VisualDesignPage() {
         audience
       });
       setPackageData(result);
-      setStatus(result.source === "openai" ? "AI 视觉设计包已生成" : "已生成本地兜底视觉设计包");
+      setStatus("视觉设计包已生成");
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "视觉设计生成失败");
     } finally {
@@ -116,7 +121,7 @@ export default function VisualDesignPage() {
                     {aggregate?.options.length ? (
                       aggregate.options.map((option) => (
                         <option key={option.id} value={option.id}>
-                          {option.strategy} · score {option.score.toFixed(1)} · {option.id}
+                          {strategyLabel(option.strategy)} · score {option.score.toFixed(1)} · {option.id}
                         </option>
                       ))
                     ) : (
@@ -168,7 +173,7 @@ export default function VisualDesignPage() {
                       <p className="page-kicker">VISUAL PACKAGE</p>
                       <h2 className="page-title mt-1 text-[1.65rem]">{packageData.design_title}</h2>
                     </div>
-                    <StatusPill tone={packageData.source === "openai" ? "ok" : "warn"}>{packageData.source}</StatusPill>
+                    <StatusPill tone={packageData.source === "openai" ? "ok" : "warn"}>{sourceLabel(packageData.source)}</StatusPill>
                   </div>
                   <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{packageData.concept_statement}</p>
                   <div className="mt-3 flex flex-wrap gap-2">

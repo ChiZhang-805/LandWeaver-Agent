@@ -13,6 +13,7 @@ import { OptionScene3D } from "@/components/OptionScene3D";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { buildDownloadUrl, createDueDiligence, createInvestmentMemo, createOptionReport, deriveOption, explainOption, exportOption, getOption, getOptionReview, getProject, getSensitivity } from "@/lib/api";
+import { strategyLabel } from "@/lib/labels";
 import type { DueDiligencePack, InvestmentMemo, OptionReview, Parcel, SensitivityScenario, SiteOption } from "@/lib/types";
 
 function money(value: number) {
@@ -146,7 +147,7 @@ export default function OptionDetailPage() {
         <div>
           <p className="page-kicker">OPTION DETAIL</p>
           <h1 className="page-title mt-2">方案详情</h1>
-          <p className="page-copy mt-2">{option ? `${option.strategy} · score ${option.score.toFixed(1)} · seed ${option.seed}` : "方案数据加载中"}</p>
+          <p className="page-copy mt-2">{option ? `${strategyLabel(option.strategy)} · score ${option.score.toFixed(1)} · seed ${option.seed}` : "方案数据加载中"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
@@ -199,7 +200,7 @@ export default function OptionDetailPage() {
               <DueDiligencePanel pack={diligence} />
               <div className="panel p-5">
                 <div className="mb-3 flex flex-wrap gap-2">
-                  <StatusPill tone={option.violations.length ? "risk" : "ok"}>{option.strategy}</StatusPill>
+                  <StatusPill tone={option.violations.length ? "risk" : "ok"}>{strategyLabel(option.strategy)}</StatusPill>
                   <StatusPill>score {option.score.toFixed(1)}</StatusPill>
                 </div>
                 <div className="grid gap-2">

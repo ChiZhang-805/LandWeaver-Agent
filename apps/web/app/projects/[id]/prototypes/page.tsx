@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Blocks, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { ArrowRight, Blocks, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -67,12 +67,24 @@ const prototypeKeywords: Record<PrototypeDraft["type"], string[]> = {
   podium: ["podium", "裙房", "底商", "配套", "商业"]
 };
 
+const prototypeLabels: Record<PrototypeDraft["type"], string> = {
+  tower: "高层塔楼",
+  slab: "板式住宅",
+  villa: "低密别墅",
+  podium: "配套裙房"
+};
+
+function prototypeLabel(type: PrototypeDraft["type"]) {
+  return prototypeLabels[type] ?? type;
+}
+
 export default function PrototypesPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const [items, setItems] = useState<BuildingPrototype[]>([]);
   const [draft, setDraft] = useState<PrototypeDraft>(emptyDraft);
   const [editingId, setEditingId] = useState("");
+  const [draftDirty, setDraftDirty] = useState(false);
   const [templateQuery, setTemplateQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -115,6 +127,7 @@ export default function PrototypesPage() {
       ...current,
       [key]: nextValue
     }) as PrototypeDraft);
+    setDraftDirty(true);
     setStatus("");
   }
 
@@ -124,28 +137,11 @@ export default function PrototypesPage() {
       setStatus("");
       const prototype = await createPrototype(projectId, payload);
       setItems((current) => [...current, prototype]);
-      setStatus(`已创建 ${prototype.type}`);
+      setStatus(`已保存${prototypeLabel(prototype.type)}`);
+      return prototype;
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function addDefaults() {
-    try {
-      setBusy(true);
-      const existingTypes = new Set(items.map((item) => item.type));
-      const missing = [templates[0], templates[1]].filter((template) => !existingTypes.has(template.type));
-      if (!missing.length) {
-        setStatus("tower / slab 已存在，无需重复创建");
-        return;
-      }
-      const created = await Promise.all(missing.map((template) => createPrototype(projectId, template)));
-      setItems((current) => [...current, ...created]);
-      setStatus(`已创建 ${created.map((item) => item.type).join(" / ")}`);
-    } catch (event) {
-      setStatus(event instanceof Error ? event.message : "创建失败");
+      return null;
     } finally {
       setBusy(false);
     }
@@ -154,7 +150,8 @@ export default function PrototypesPage() {
   async function submitDraft() {
     try {
       if (!editingId) {
-        await add(draft);
+        const created = await add(draft);
+        if (created) setDraftDirty(false);
         return;
       }
       setBusy(true);
@@ -163,7 +160,8 @@ export default function PrototypesPage() {
         const updated = await updatePrototype(projectId, editingId, draft);
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setEditingId("");
-        setStatus(`已更新 ${updated.type}`);
+        setDraftDirty(false);
+        setStatus(`已保存${prototypeLabel(updated.type)}`);
       }
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -179,7 +177,7 @@ export default function PrototypesPage() {
       await deletePrototype(projectId, item.id);
       setItems((current) => current.filter((candidate) => candidate.id !== item.id));
       if (editingId === item.id) setEditingId("");
-      setStatus(`已删除 ${item.type}`);
+      setStatus(`已删除${prototypeLabel(item.type)}`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "删除失败");
     } finally {
@@ -200,17 +198,19 @@ export default function PrototypesPage() {
       height_per_floor_m: item.height_per_floor_m
     });
     setEditingId(item.id);
+    setDraftDirty(false);
   }
 
   const filteredTemplates = templates.filter((prototype) => {
     const query = templateQuery.trim().toLowerCase();
     if (!query) return true;
     const keywords = prototypeKeywords[prototype.type].join(" ").toLowerCase();
-    const searchable = `${prototype.type} ${keywords}`;
+    const searchable = `${prototype.type} ${prototypeLabel(prototype.type)} ${keywords}`;
     const compactSearchable = searchable.replace(/\s+/g, "");
     const compactQuery = query.replace(/\s+/g, "");
     return searchable.includes(query) || compactSearchable.includes(compactQuery);
   });
+  const canGoNext = items.length > 0 && !busy && !draftDirty;
 
   return (
     <Shell projectId={projectId}>
@@ -222,14 +222,21 @@ export default function PrototypesPage() {
             <p className="page-copy mt-2">候选楼型、层数、标准层和户型效率。</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button title="创建默认组合" className="icon-button bg-teal text-white" disabled={busy} onClick={addDefaults}>
-              <Plus size={16} aria-hidden />
-              <span>tower + slab</span>
+            <button title="保存原型" className="icon-button bg-teal text-white" disabled={busy} onClick={submitDraft}>
+              <Save size={16} aria-hidden />
+              <span>保存</span>
             </button>
-            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/generate`}>
-              <ArrowRight size={16} aria-hidden />
-              <span>下一步</span>
-            </Link>
+            {canGoNext ? (
+              <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/generate`}>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </Link>
+            ) : (
+              <button className="icon-button border border-line bg-white" disabled>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </button>
+            )}
           </div>
         </div>
         <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -248,18 +255,19 @@ export default function PrototypesPage() {
                 {filteredTemplates.map((prototype) => (
                   <div key={prototype.type} className="panel p-5">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         <span className="flex size-10 items-center justify-center rounded-[8px] bg-field">
                           <Blocks size={18} aria-hidden />
                         </span>
-                        <div>
-                          <h2 className="font-bold">{prototype.type}</h2>
-                          <p className="text-sm text-slate-600">
-                            {prototype.footprint_width_m}m x {prototype.footprint_depth_m}m / {prototype.floors_min}-{prototype.floors_max}F
-                          </p>
+                        <div className="min-w-0">
+                          <h2 className="font-bold">{prototypeLabel(prototype.type)}</h2>
+                          <div className="mt-1 flex flex-wrap gap-1.5 text-xs font-semibold text-slate-600">
+                            <span className="rounded-[6px] border border-line bg-field px-2 py-1">{prototype.footprint_width_m}m × {prototype.footprint_depth_m}m</span>
+                            <span className="rounded-[6px] border border-line bg-field px-2 py-1">{prototype.floors_min}-{prototype.floors_max}层</span>
+                          </div>
                         </div>
                       </div>
-                      <button title={`创建 ${prototype.type}`} className="icon-button border border-line bg-white" disabled={busy} onClick={() => add(prototype)}>
+                      <button title={`保存${prototypeLabel(prototype.type)}`} className="icon-button border border-line bg-white" disabled={busy} onClick={() => add(prototype)}>
                         <Plus size={16} aria-hidden />
                       </button>
                     </div>
@@ -275,7 +283,14 @@ export default function PrototypesPage() {
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="section-title">{editingId ? "编辑原型" : "自定义原型"}</h2>
                   {editingId ? (
-                    <button title="取消编辑" className="icon-button border border-line bg-white" onClick={() => setEditingId("")}>
+                    <button
+                      title="取消编辑"
+                      className="icon-button border border-line bg-white"
+                      onClick={() => {
+                        setEditingId("");
+                        setDraftDirty(false);
+                      }}
+                    >
                       <X size={16} aria-hidden />
                     </button>
                   ) : null}
@@ -284,10 +299,10 @@ export default function PrototypesPage() {
                   <label className="grid gap-1 text-sm font-medium text-ink">
                     <span className="text-xs font-bold text-slate-500">类型</span>
                     <select className="input-control" value={draft.type} onChange={(event) => updateDraft("type", event.target.value)}>
-                      <option value="tower">tower</option>
-                      <option value="slab">slab</option>
-                      <option value="villa">villa</option>
-                      <option value="podium">podium</option>
+                      <option value="tower">高层塔楼</option>
+                      <option value="slab">板式住宅</option>
+                      <option value="villa">低密别墅</option>
+                      <option value="podium">配套裙房</option>
                     </select>
                   </label>
                   <Field label="面宽 m" value={draft.footprint_width_m} onChange={(value) => updateDraft("footprint_width_m", value)} />
@@ -299,9 +314,9 @@ export default function PrototypesPage() {
                   <Field label="套均面积 m2" value={draft.avg_unit_area_m2} onChange={(value) => updateDraft("avg_unit_area_m2", value)} />
                   <Field label="层高 m" value={draft.height_per_floor_m} onChange={(value) => updateDraft("height_per_floor_m", value)} />
                 </div>
-                <button title={editingId ? "更新原型" : "创建原型"} className="icon-button mt-4 bg-teal text-white" disabled={busy} onClick={submitDraft}>
-                  <Plus size={16} aria-hidden />
-                  <span>{editingId ? "更新" : "创建"}</span>
+                <button title="保存原型" className="icon-button mt-4 bg-teal text-white" disabled={busy} onClick={submitDraft}>
+                  <Save size={16} aria-hidden />
+                  <span>保存</span>
                 </button>
               </div>
             </div>
@@ -317,7 +332,7 @@ export default function PrototypesPage() {
                   <article key={item.id} className="rounded-[8px] border border-line/80 bg-white p-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="break-words font-bold text-ink">{item.type}</h3>
+                        <h3 className="break-words font-bold text-ink">{prototypeLabel(item.type)}</h3>
                         <p className="mt-1 break-all text-xs font-semibold text-slate-500">{item.id}</p>
                       </div>
                       <div className="flex gap-2">
@@ -332,11 +347,11 @@ export default function PrototypesPage() {
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                       <div>
                         <p className="text-xs font-bold text-slate-500">尺寸</p>
-                        <p className="mt-1 font-semibold text-ink">{item.footprint_width_m} x {item.footprint_depth_m}m</p>
+                        <p className="mt-1 font-semibold text-ink">{item.footprint_width_m}m × {item.footprint_depth_m}m</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">层数</p>
-                        <p className="mt-1 font-semibold text-ink">{item.floors_min}-{item.floors_max}</p>
+                        <p className="mt-1 font-semibold text-ink">{item.floors_min}-{item.floors_max}层</p>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-slate-500">标准层</p>

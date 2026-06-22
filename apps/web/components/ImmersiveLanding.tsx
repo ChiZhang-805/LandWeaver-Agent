@@ -45,7 +45,7 @@ const chapters: Chapter[] = [
     label: "产品",
     kicker: "PROTOTYPE NETWORK",
     title: "用产品原型生成候选",
-    body: "tower、slab 与经济假设进入同一个离散搜索空间，候选楼栋不靠猜。",
+    body: "高层塔楼、板式住宅与经济假设进入同一个离散搜索空间，候选楼栋不靠猜。",
     action: "配置产品",
     camera: new THREE.Vector3(0, 9, 21),
     lookAt: new THREE.Vector3(0, 1.2, 0),

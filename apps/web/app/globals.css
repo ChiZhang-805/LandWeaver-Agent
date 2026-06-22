@@ -100,6 +100,12 @@ table {
   box-shadow: 0 10px 24px rgba(23, 32, 42, 0.08);
 }
 
+.icon-button:disabled {
+  opacity: 0.46;
+  box-shadow: none;
+  transform: none;
+}
+
 .icon-button:focus-visible,
 input:focus-visible,
 select:focus-visible,

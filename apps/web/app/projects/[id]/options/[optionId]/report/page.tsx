@@ -8,6 +8,7 @@ import { OptionCanvas } from "@/components/OptionCanvas";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { buildDownloadUrl, createOptionReport, explainOption, getOption, getProject, getSensitivity } from "@/lib/api";
+import { strategyLabel } from "@/lib/labels";
 import type { Parcel, Project, SensitivityScenario, SiteOption } from "@/lib/types";
 
 function money(value: number) {
@@ -66,7 +67,7 @@ export default function OptionReportPage() {
         <div>
           <p className="page-kicker">REPORT</p>
           <h1 className="page-title mt-2">方案报告</h1>
-          <p className="page-copy mt-2">{project && option ? `${project.title} · ${option.strategy}` : "报告数据加载中"}</p>
+          <p className="page-copy mt-2">{project && option ? `${project.title} · ${strategyLabel(option.strategy)}` : "报告数据加载中"}</p>
         </div>
         <div className="flex gap-2">
           <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
@@ -86,7 +87,7 @@ export default function OptionReportPage() {
           <header>
             <p className="text-sm font-semibold text-teal">LANDWEAVER OPTION REPORT</p>
             <h2 className="mt-2 text-3xl font-black text-ink">{project.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{project.city} · {option.strategy} · {parcel?.area_m2.toLocaleString("zh-CN")} m2</p>
+            <p className="mt-2 text-sm text-slate-600">{project.city} · {strategyLabel(option.strategy)} · {parcel?.area_m2.toLocaleString("zh-CN")} m2</p>
           </header>
           <MetricGrid metrics={option.metrics} />
           <OptionCanvas parcel={parcel} option={option} />

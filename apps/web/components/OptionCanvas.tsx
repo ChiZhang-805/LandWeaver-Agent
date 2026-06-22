@@ -1,3 +1,4 @@
+import { strategyLabel } from "@/lib/labels";
 import type { Coordinate, Parcel, SiteOption } from "@/lib/types";
 
 function ring(points?: Coordinate[]) {
@@ -33,7 +34,7 @@ export function OptionCanvas({
       <div className={`flex shrink-0 items-center justify-between border-b border-line bg-field/70 px-4 ${compact ? "py-2" : "py-3"}`}>
         <div>
           <h2 className="section-title">总图预览</h2>
-          <p className={`${compact ? "mt-0" : "mt-1"} text-xs font-semibold text-slate-500`}>{option ? `${option.buildings.length} 栋 · ${option.strategy}` : "等待方案"}</p>
+          <p className={`${compact ? "mt-0" : "mt-1"} text-xs font-semibold text-slate-500`}>{option ? `${option.buildings.length} 栋 · ${strategyLabel(option.strategy)}` : "等待方案"}</p>
         </div>
         <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
           <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-rose" />红线</span>
@@ -56,7 +57,7 @@ export function OptionCanvas({
           <g key={`${building.prototype_id}-${index}`}>
             <polygon points={ring(building.footprint)} fill="#b7791f55" stroke="#8a5a12" strokeWidth="1.2" />
             <text x={building.centroid[0]} y={building.centroid[1]} textAnchor="middle" dominantBaseline="middle" fontSize="4.2" fill="#17202a">
-              {building.floors}F
+              {building.floors}层
             </text>
           </g>
         ))}

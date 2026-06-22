@@ -32,12 +32,18 @@ export default function ConstraintsPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const [form, setForm] = useState(initial);
+  const [isSaved, setIsSaved] = useState(false);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
     getProject(projectId)
       .then((aggregate) => {
-        if (aggregate.constraints) setForm(aggregate.constraints);
+        if (aggregate.constraints) {
+          setForm(aggregate.constraints);
+          setIsSaved(true);
+        } else {
+          setIsSaved(false);
+        }
         setStatus("");
       })
       .catch((event) => {
@@ -59,14 +65,17 @@ export default function ConstraintsPage() {
       target[keys[keys.length - 1]] = number;
       return next;
     });
+    setIsSaved(false);
     setStatus("");
   }
 
   async function submit() {
     try {
       await saveConstraints(projectId, form);
+      setIsSaved(true);
       setStatus("已保存约束");
     } catch (event) {
+      setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "保存失败");
     }
   }
@@ -84,10 +93,17 @@ export default function ConstraintsPage() {
             <Save size={16} aria-hidden />
             <span>保存</span>
           </button>
-          <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/prototypes`}>
-            <ArrowRight size={16} aria-hidden />
-            <span>下一步</span>
-          </Link>
+          {isSaved ? (
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/prototypes`}>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </Link>
+          ) : (
+            <button className="icon-button border border-line bg-white" disabled>
+              <ArrowRight size={16} aria-hidden />
+              <span>下一步</span>
+            </button>
+          )}
         </div>
       </div>
       <div className="grid gap-4">

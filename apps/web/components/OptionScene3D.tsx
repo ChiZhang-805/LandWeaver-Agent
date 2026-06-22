@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { strategyLabel } from "@/lib/labels";
 import type { Parcel, SiteOption } from "@/lib/types";
 
 function bounds(parcel?: Parcel | null, option?: SiteOption | null) {
@@ -122,7 +123,7 @@ export function OptionScene3D({ parcel, option }: { parcel?: Parcel | null; opti
       <div className="flex items-center justify-between border-b border-line bg-field/70 px-4 py-3">
         <div>
           <h2 className="section-title">三维体块</h2>
-          <p className="mt-1 text-xs font-semibold text-slate-500">{option ? `${option.buildings.length} 栋 · ${option.strategy}` : "等待方案"}</p>
+          <p className="mt-1 text-xs font-semibold text-slate-500">{option ? `${option.buildings.length} 栋 · ${strategyLabel(option.strategy)}` : "等待方案"}</p>
         </div>
       </div>
       <canvas ref={canvasRef} className="h-[420px] w-full bg-field" aria-label="3D 方案体块" />

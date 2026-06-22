@@ -9,6 +9,7 @@ import { OptionCanvas } from "@/components/OptionCanvas";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { getProject } from "@/lib/api";
+import { strategyLabel } from "@/lib/labels";
 import type { Parcel, SiteOption } from "@/lib/types";
 
 function format(value: unknown) {
@@ -108,7 +109,7 @@ export default function OptionsPage() {
                           >
                             <div className="flex flex-wrap items-start justify-between gap-3">
                               <div className="min-w-0">
-                                <StatusPill tone={tone}>{option.strategy}</StatusPill>
+                                <StatusPill tone={tone}>{strategyLabel(option.strategy)}</StatusPill>
                                 <p className="mt-2 text-xs font-bold text-slate-500">score {option.score.toFixed(1)}</p>
                               </div>
                               <Link
