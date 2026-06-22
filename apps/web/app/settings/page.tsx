@@ -116,7 +116,7 @@ export default function SettingsPage() {
   }
 
   async function clear() {
-    if (!window.confirm("清除当前浏览器保存的 OpenAI API Key？")) return;
+    if (!window.confirm("清除当前浏览器保存的 OpenAI API Key 和模型选择？")) return;
     try {
       const next = await clearOpenAISettings();
       setSettings(next);
@@ -135,7 +135,7 @@ export default function SettingsPage() {
         <div>
           <p className="page-kicker">SETTINGS</p>
           <h1 className="page-title mt-2">OpenAI 设置</h1>
-          <p className="page-copy mt-2">模型、密钥和当前来源；Key 只保存在当前浏览器。</p>
+          <p className="page-copy mt-2">模型、密钥和当前来源；Key 与模型选择只保存在当前浏览器。</p>
         </div>
         <button title="刷新" className="icon-button border border-line bg-white" onClick={load}>
           <RefreshCcw size={16} aria-hidden />
@@ -212,7 +212,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <p className="text-xs leading-5 text-slate-500">
-              API Key 不会写入 Render 或后端文件；当前浏览器会在调用简报解析、方案解释和视觉设计时通过请求头临时发送。
+              API Key 和模型选择不会写入 Render 或后端文件；当前浏览器会在调用简报解析、方案解释和视觉设计时通过请求头临时发送。
             </p>
           </div>
         </div>

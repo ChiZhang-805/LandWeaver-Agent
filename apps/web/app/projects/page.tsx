@@ -40,8 +40,13 @@ export default function ProjectsPage() {
   }, []);
 
   async function archive(project: Project) {
-    const next = await updateProject(project.id, { status: project.status === "archived" ? "draft" : "archived" });
-    setProjects((current) => current.map((item) => (item.id === next.id ? next : item)));
+    try {
+      const next = await updateProject(project.id, { status: project.status === "archived" ? "draft" : "archived" });
+      setProjects((current) => current.map((item) => (item.id === next.id ? next : item)));
+      setStatus(next.status === "archived" ? `已归档 ${next.title}` : `已恢复 ${next.title}`);
+    } catch (event) {
+      setStatus(event instanceof Error ? event.message : "状态更新失败");
+    }
   }
 
   async function duplicate(project: Project) {

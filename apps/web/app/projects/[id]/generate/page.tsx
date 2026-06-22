@@ -108,9 +108,14 @@ export default function GeneratePage() {
       if (created.status !== "finished") {
         clearPollTimer();
         pollTimer.current = window.setInterval(async () => {
-          const next = await getJob(created.job_id);
-          setJob(next);
-          if (next.status === "finished" || next.status === "failed") clearPollTimer();
+          try {
+            const next = await getJob(created.job_id);
+            setJob(next);
+            if (next.status === "finished" || next.status === "failed") clearPollTimer();
+          } catch (event) {
+            clearPollTimer();
+            setError(event instanceof Error ? event.message : "任务状态刷新失败");
+          }
         }, 1200);
       }
     } catch (event) {
@@ -218,6 +223,12 @@ export default function GeneratePage() {
                   </div>
                 ) : null}
                 {job.result_ids.length ? <p className="text-sm text-slate-700">{job.result_ids.length} 个方案已生成</p> : null}
+                {job.status === "finished" && job.result_ids.length ? (
+                  <Link className="icon-button w-fit bg-teal text-white" href={`/projects/${projectId}/options`}>
+                    <ArrowRight size={16} aria-hidden />
+                    <span>查看方案</span>
+                  </Link>
+                ) : null}
               </div>
             ) : (
               <div className="empty-state h-full">

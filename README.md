@@ -70,7 +70,7 @@ LANDWEAVER_API_BASE_URL=http://127.0.0.1:8000 npm run dev -- --hostname 0.0.0.0 
 本仓库根目录包含 `render.yaml`，可用 Render Blueprint 一键创建两个 public web services：
 
 - `landweaver-api`：FastAPI 后端，健康检查 `/health`。
-- `landweaver-web`：Next.js 前端，面向用户公开访问；前端通过 Render 内网代理 `/api/*` 和 `/exports/*` 到后端。
+- `landweaver-web`：Next.js 前端，面向用户公开访问；前端通过 `LANDWEAVER_API_BASE_URL` 代理 `/api/*` 和 `/exports/*` 到后端。Render Free plan 下默认使用 API 的 public `.onrender.com` 地址，避免 free web service 不能接收私网流量的问题。
 
 一键部署链接：
 
@@ -78,7 +78,7 @@ LANDWEAVER_API_BASE_URL=http://127.0.0.1:8000 npm run dev -- --hostname 0.0.0.0 
 https://render.com/deploy?repo=https://github.com/ChiZhang-805/LandWeaver-Agent
 ```
 
-部署完成后，把 `landweaver-web` 的 `https://...onrender.com` 地址分享给用户即可。默认无 Key 时会走 deterministic mock；用户可以直接在网页的 **OpenAI 设置** 页填写自己的 Key。Key 只保存在当前浏览器 localStorage，并通过 `X-OpenAI-API-Key` 请求头临时发送给 API。Render Dashboard 里的 `OPENAI_API_KEY` 只是可选的站主预置方式，不是必需。
+部署完成后，把 `landweaver-web` 的 `https://...onrender.com` 地址分享给用户即可。默认无 Key 时会走 deterministic mock；用户可以直接在网页的 **OpenAI 设置** 页填写自己的 Key，并切换解释模型和简报模型。Key 和模型选择只保存在当前浏览器 localStorage，并通过 `X-OpenAI-API-Key`、`X-OpenAI-Model-Text`、`X-OpenAI-Model-Fast` 请求头临时发送给 API。Render Dashboard 里的 `OPENAI_API_KEY` 只是可选的站主预置方式，不是必需。
 
 注意：当前 Blueprint 使用 Render free plan 和 JSON/文件落盘仓储，适合公开 demo。免费服务可能休眠，且重启/重新部署后项目数据和导出文件不保证长期保留；生产版应改接 Render Postgres/PostGIS、对象存储和正式异步队列。
 

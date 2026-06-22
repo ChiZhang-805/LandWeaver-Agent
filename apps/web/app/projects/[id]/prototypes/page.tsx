@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Blocks, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowRight, Blocks, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -60,12 +60,20 @@ const templates: PrototypeDraft[] = [
 
 const emptyDraft = templates[0];
 
+const prototypeKeywords: Record<PrototypeDraft["type"], string[]> = {
+  tower: ["tower", "高层", "塔楼", "高容积率", "改善"],
+  slab: ["slab", "板楼", "洋房", "均衡", "通风"],
+  villa: ["villa", "别墅", "低密", "大户型", "低风险"],
+  podium: ["podium", "裙房", "底商", "配套", "商业"]
+};
+
 export default function PrototypesPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const [items, setItems] = useState<BuildingPrototype[]>([]);
   const [draft, setDraft] = useState<PrototypeDraft>(emptyDraft);
   const [editingId, setEditingId] = useState("");
+  const [templateQuery, setTemplateQuery] = useState("");
   const [status, setStatus] = useState("");
 
   useEffect(() => {
@@ -75,13 +83,23 @@ export default function PrototypesPage() {
   }, [projectId]);
 
   function updateDraft(key: keyof PrototypeDraft, value: string) {
-    if (key !== "type" && !Number.isFinite(Number(value))) {
+    const cleaned = value.trim();
+    if (key !== "type" && (!cleaned || !Number.isFinite(Number(cleaned)))) {
       setStatus("请输入有效数字");
+      return;
+    }
+    const nextValue = key === "type" ? value : Number(cleaned);
+    const nextDraft = {
+      ...draft,
+      [key]: nextValue
+    } as PrototypeDraft;
+    if (nextDraft.floors_max < nextDraft.floors_min) {
+      setStatus("最高层数不能小于最低层数");
       return;
     }
     setDraft((current) => ({
       ...current,
-      [key]: key === "type" ? value : Number(value)
+      [key]: nextValue
     }) as PrototypeDraft);
     setStatus("");
   }
@@ -94,9 +112,15 @@ export default function PrototypesPage() {
 
   async function addDefaults() {
     try {
-      const created = await Promise.all([createPrototype(projectId, templates[0]), createPrototype(projectId, templates[1])]);
+      const existingTypes = new Set(items.map((item) => item.type));
+      const missing = [templates[0], templates[1]].filter((template) => !existingTypes.has(template.type));
+      if (!missing.length) {
+        setStatus("tower / slab 已存在，无需重复创建");
+        return;
+      }
+      const created = await Promise.all(missing.map((template) => createPrototype(projectId, template)));
       setItems((current) => [...current, ...created]);
-      setStatus("已创建 tower / slab");
+      setStatus(`已创建 ${created.map((item) => item.type).join(" / ")}`);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
     }
@@ -143,6 +167,13 @@ export default function PrototypesPage() {
     setEditingId(item.id);
   }
 
+  const filteredTemplates = templates.filter((prototype) => {
+    const query = templateQuery.trim().toLowerCase();
+    if (!query) return true;
+    const keywords = prototypeKeywords[prototype.type].join(" ").toLowerCase();
+    return `${prototype.type} ${keywords}`.includes(query);
+  });
+
   return (
     <Shell projectId={projectId}>
       <div className="flex h-full min-h-0 flex-col">
@@ -167,7 +198,16 @@ export default function PrototypesPage() {
           <div className="min-h-0 overflow-y-auto overflow-x-hidden pr-1">
             <div className="grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
-                {templates.map((prototype) => (
+                <label className="panel flex items-center gap-3 p-4 md:col-span-2">
+                  <Search size={16} className="shrink-0 text-slate-500" aria-hidden />
+                  <input
+                    className="min-h-10 min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none"
+                    value={templateQuery}
+                    onChange={(event) => setTemplateQuery(event.target.value)}
+                    placeholder="搜索：高层、板楼、低密、底商..."
+                  />
+                </label>
+                {filteredTemplates.map((prototype) => (
                   <div key={prototype.type} className="panel p-5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -187,6 +227,11 @@ export default function PrototypesPage() {
                     </div>
                   </div>
                 ))}
+                {!filteredTemplates.length ? (
+                  <div className="empty-state md:col-span-2">
+                    <p className="font-bold text-ink">没有匹配的原型</p>
+                  </div>
+                ) : null}
               </div>
               <div className="panel p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">

@@ -285,6 +285,20 @@ def test_openai_settings_can_use_browser_request_header():
     assert browser_payload["model_text"] == "gpt-test-text"
     assert browser_payload["model_fast"] == "gpt-test-fast"
 
+    model_only_resp = client.get(
+        "/api/settings/openai",
+        headers={
+            "X-OpenAI-Model-Text": "gpt-model-only-text",
+            "X-OpenAI-Model-Fast": "gpt-model-only-fast",
+        },
+    )
+    assert model_only_resp.status_code == 200
+    model_only_payload = model_only_resp.json()
+    assert model_only_payload["configured"] is False
+    assert model_only_payload["source"] == "browser"
+    assert model_only_payload["model_text"] == "gpt-model-only-text"
+    assert model_only_payload["model_fast"] == "gpt-model-only-fast"
+
     after_resp = client.get("/api/settings/openai")
     assert after_resp.status_code == 200
     assert after_resp.json()["source"] == "mock"

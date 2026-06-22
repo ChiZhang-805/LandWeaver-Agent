@@ -98,10 +98,11 @@ def get_openai_runtime_settings() -> dict:
     settings = get_settings()
     runtime = _read_openai_runtime_settings()
     request_key = _request_openai_api_key.get()
+    request_model = bool(_request_openai_model_text.get() or _request_openai_model_fast.get())
     api_key = str(request_key or runtime.get("api_key") or settings.openai_api_key or "").strip() or None
     model_text = str(_request_openai_model_text.get() or runtime.get("model_text") or settings.openai_model_text).strip()
     model_fast = str(_request_openai_model_fast.get() or runtime.get("model_fast") or settings.openai_model_fast).strip()
-    source = "browser" if request_key else "web" if runtime.get("api_key") else "env" if settings.openai_api_key else "mock"
+    source = "browser" if request_key or request_model else "web" if runtime.get("api_key") else "env" if settings.openai_api_key else "mock"
     return {
         "api_key": api_key,
         "configured": bool(api_key),

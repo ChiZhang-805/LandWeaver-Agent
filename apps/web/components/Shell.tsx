@@ -21,16 +21,16 @@ export function Shell({ projectId, children }: { projectId?: string; children: R
     <main className="flex h-[100svh] min-h-0 flex-col overflow-hidden">
       <header className="z-40 shrink-0 border-b border-line/80 bg-white/[0.88] shadow-[0_8px_28px_rgba(23,32,42,0.05)] backdrop-blur print:hidden">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
-          <Link href="/" className="flex min-w-0 items-center gap-3 text-ink">
+          <Link href="/" className="flex shrink-0 items-center gap-3 text-ink">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] border border-teal/20 bg-teal/10 text-teal">
               <LandPlot size={20} aria-hidden />
             </span>
-            <span className="min-w-0">
-              <span className="block truncate text-base font-black leading-5">LandWeaver Agent（地织）</span>
-              <span className="block truncate text-xs font-semibold text-slate-500">Prototype planning engine</span>
+            <span>
+              <span className="block text-base font-black leading-5">LandWeaver Agent（地织）</span>
+              <span className="block text-xs font-semibold text-slate-500">Prototype planning engine</span>
             </span>
           </Link>
-          <nav className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
+          <nav className="flex min-w-0 flex-wrap items-center gap-2 lg:flex-1 lg:justify-end">
             <Link title="首页" href="/" className="icon-button border border-line bg-white text-ink">
               <Home size={16} aria-hidden />
               <span>首页</span>
