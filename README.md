@@ -104,7 +104,7 @@ pytest
 当前验证结果：
 
 - `python -m pytest apps/api/tests -q`：17 passed。
-- `cd apps/web && npx tsc --noEmit`：通过；当前 `package.json` 未配置 `typecheck` 脚本。
+- `cd apps/web && npm run typecheck`：通过。
 - `cd apps/web && npm run lint`：无警告或错误。
 - `cd apps/web && npm run build`：通过。
 
