@@ -27,7 +27,7 @@ export function Shell({ projectId, children }: { projectId?: string; children: R
   return (
     <main className="flex h-[100svh] min-h-0 flex-col overflow-hidden">
       <header className="z-40 shrink-0 border-b border-line/80 bg-white/[0.88] shadow-[0_8px_28px_rgba(23,32,42,0.05)] backdrop-blur print:hidden">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex w-full flex-col gap-3 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
           <Link href="/" className="flex shrink-0 items-center gap-3 text-ink">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-[8px] border border-teal/20 bg-teal/10 text-teal">
               <LandPlot size={20} aria-hidden />
@@ -75,7 +75,7 @@ export function Shell({ projectId, children }: { projectId?: string; children: R
           </nav>
         </div>
       </header>
-      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-1 overflow-hidden px-5 print:block">
+      <div className="flex min-h-0 w-full flex-1 overflow-hidden px-5 print:block">
         {projectId ? (
           <aside className="hidden w-32 shrink-0 overflow-y-auto border-r border-line/70 py-5 pr-3 xl:block print:hidden">
             <nav className="grid gap-2">
