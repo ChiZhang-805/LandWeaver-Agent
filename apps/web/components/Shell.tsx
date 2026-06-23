@@ -195,7 +195,7 @@ export function Shell({
             </nav>
           </aside>
         ) : null}
-        <div data-shell-content className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-5 xl:pl-5">
+        <div data-shell-content className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 xl:pl-5">
           {children}
         </div>
       </div>
