@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowRight, Save } from "lucide-react";
+import { ArrowLeft, ArrowRight, Save } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Field } from "@/components/Field";
 import { Shell } from "@/components/Shell";
 import { getProject, saveConstraints } from "@/lib/api";
+import { notifyProjectUpdated } from "@/lib/projectEvents";
 import type { ConstraintSet } from "@/lib/types";
 
 const initial: ConstraintSet = {
@@ -73,7 +74,8 @@ export default function ConstraintsPage() {
     try {
       await saveConstraints(projectId, form);
       setIsSaved(true);
-      setStatus("已保存约束");
+      notifyProjectUpdated(projectId);
+      setStatus("");
     } catch (event) {
       setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -81,7 +83,7 @@ export default function ConstraintsPage() {
   }
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady={isSaved}>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="page-kicker">CONSTRAINTS</p>
@@ -93,6 +95,10 @@ export default function ConstraintsPage() {
             <Save size={16} aria-hidden />
             <span>保存</span>
           </button>
+          <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/brief`}>
+            <ArrowLeft size={16} aria-hidden />
+            <span>上一步</span>
+          </Link>
           {isSaved ? (
             <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/prototypes`}>
               <ArrowRight size={16} aria-hidden />

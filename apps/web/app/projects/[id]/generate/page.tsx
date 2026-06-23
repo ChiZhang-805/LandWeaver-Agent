@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, CircleAlert, CircleDashed, Play, RefreshCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, CircleAlert, CircleDashed, Play, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import { DesignDiagnosticsPanel } from "@/components/DesignDiagnosticsPanel";
 import { Shell } from "@/components/Shell";
 import { StatusPill } from "@/components/StatusPill";
 import { generateSiteOptions, getJob, getProject, getProjectDiagnostics } from "@/lib/api";
+import { notifyProjectUpdated } from "@/lib/projectEvents";
 import type { JobStatus, ProjectAggregate, ProjectDiagnostics } from "@/lib/types";
 
 const dependencyLabels = {
@@ -93,6 +94,7 @@ export default function GeneratePage() {
   const missing = useMemo(() => missingFor(aggregate), [aggregate]);
 
   const ready = aggregate !== null && missing.length === 0;
+  const hasGeneratedOptions = Boolean(aggregate?.options.length || job?.result_ids.length);
 
   async function start() {
     const latest = await loadPrerequisites();
@@ -105,13 +107,23 @@ export default function GeneratePage() {
       setError("");
       const created = await generateSiteOptions(projectId);
       setJob(created);
+      if (created.status === "finished" && created.result_ids.length) {
+        notifyProjectUpdated(projectId);
+        await loadPrerequisites();
+      }
       if (created.status !== "finished") {
         clearPollTimer();
         pollTimer.current = window.setInterval(async () => {
           try {
             const next = await getJob(created.job_id);
             setJob(next);
-            if (next.status === "finished" || next.status === "failed") clearPollTimer();
+            if (next.status === "finished" || next.status === "failed") {
+              clearPollTimer();
+              if (next.status === "finished" && next.result_ids.length) {
+                notifyProjectUpdated(projectId);
+                loadPrerequisites();
+              }
+            }
           } catch (event) {
             clearPollTimer();
             setError(event instanceof Error ? event.message : "任务状态刷新失败");
@@ -124,7 +136,7 @@ export default function GeneratePage() {
   }
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady={hasGeneratedOptions}>
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
@@ -140,10 +152,21 @@ export default function GeneratePage() {
             <button title="刷新" className="icon-button border border-line bg-white" onClick={() => { loadPrerequisites(); if (job) getJob(job.job_id).then(setJob); }}>
               <RefreshCcw size={16} aria-hidden />
             </button>
-            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/options`}>
-              <ArrowRight size={16} aria-hidden />
-              <span>查看方案</span>
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/prototypes`}>
+              <ArrowLeft size={16} aria-hidden />
+              <span>上一步</span>
             </Link>
+            {hasGeneratedOptions ? (
+              <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/options`}>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </Link>
+            ) : (
+              <button className="icon-button border border-line bg-white" disabled>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </button>
+            )}
           </div>
         </div>
         {aggregate && missing.length ? (

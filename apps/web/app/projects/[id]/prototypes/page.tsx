@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowRight, Blocks, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Blocks, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Field } from "@/components/Field";
 import { Shell } from "@/components/Shell";
 import { createPrototype, deletePrototype, getProject, updatePrototype } from "@/lib/api";
+import { notifyProjectUpdated } from "@/lib/projectEvents";
 import type { BuildingPrototype } from "@/lib/types";
 
 type PrototypeDraft = Omit<BuildingPrototype, "id">;
@@ -137,6 +138,7 @@ export default function PrototypesPage() {
       setStatus("");
       const prototype = await createPrototype(projectId, payload);
       setItems((current) => [...current, prototype]);
+      notifyProjectUpdated(projectId);
       return prototype;
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "创建失败");
@@ -160,6 +162,7 @@ export default function PrototypesPage() {
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setEditingId("");
         setDraftDirty(false);
+        notifyProjectUpdated(projectId);
       }
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -175,6 +178,7 @@ export default function PrototypesPage() {
       await deletePrototype(projectId, item.id);
       setItems((current) => current.filter((candidate) => candidate.id !== item.id));
       if (editingId === item.id) setEditingId("");
+      notifyProjectUpdated(projectId);
     } catch (event) {
       setStatus(event instanceof Error ? event.message : "删除失败");
     } finally {
@@ -210,7 +214,7 @@ export default function PrototypesPage() {
   const canGoNext = items.length > 0 && !busy && !draftDirty;
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady={canGoNext}>
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
@@ -223,6 +227,10 @@ export default function PrototypesPage() {
               <Save size={16} aria-hidden />
               <span>保存</span>
             </button>
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/constraints`}>
+              <ArrowLeft size={16} aria-hidden />
+              <span>上一步</span>
+            </Link>
             {canGoNext ? (
               <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/generate`}>
                 <ArrowRight size={16} aria-hidden />

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ParcelCanvas } from "@/components/ParcelCanvas";
 import { Shell } from "@/components/Shell";
 import { getProject, saveParcel } from "@/lib/api";
+import { notifyProjectUpdated } from "@/lib/projectEvents";
 import type { Coordinate } from "@/lib/types";
 
 const sample: Coordinate[] = [
@@ -231,12 +232,13 @@ export default function ParcelPage() {
 
   async function submit() {
     try {
-      const parcel = await saveParcel(
+      await saveParcel(
         projectId,
         geojson ? { geojson, source: "geojson" } : dxfText ? { dxf_text: dxfText, source: "dxf" } : { points, source: "manual" }
       );
       setIsSaved(true);
-      setStatus(`已保存 ${parcel.area_m2.toLocaleString("zh-CN")} ㎡`);
+      notifyProjectUpdated(projectId);
+      setStatus("");
     } catch (event) {
       setIsSaved(false);
       setStatus(event instanceof Error ? event.message : "保存失败");
@@ -258,7 +260,7 @@ export default function ParcelPage() {
   }
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady={isSaved}>
       <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
         <div>

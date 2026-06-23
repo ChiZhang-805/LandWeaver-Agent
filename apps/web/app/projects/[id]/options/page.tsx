@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Eye, RefreshCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -46,7 +46,7 @@ export default function OptionsPage() {
   const selected = options.find((option) => option.id === selectedId) || options[0];
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady={options.length > 0}>
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
@@ -59,10 +59,21 @@ export default function OptionsPage() {
               <RefreshCcw size={16} aria-hidden />
               <span>刷新</span>
             </button>
-            <Link className="icon-button bg-teal text-white" href={`/projects/${projectId}/generate`}>
-              <ArrowRight size={16} aria-hidden />
-              <span>生成</span>
+            <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/generate`}>
+              <ArrowLeft size={16} aria-hidden />
+              <span>上一步</span>
             </Link>
+            {options.length ? (
+              <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/visual`}>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </Link>
+            ) : (
+              <button className="icon-button border border-line bg-white" disabled>
+                <ArrowRight size={16} aria-hidden />
+                <span>下一步</span>
+              </button>
+            )}
           </div>
         </div>
         {selected ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Copy, Image as ImageIcon, Palette, RefreshCcw, WandSparkles } from "lucide-react";
+import { ArrowLeft, Copy, Image as ImageIcon, Palette, RefreshCcw, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -89,7 +89,7 @@ export default function VisualDesignPage() {
   }
 
   return (
-    <Shell projectId={projectId}>
+    <Shell projectId={projectId} currentStepReady>
       <div className="flex h-full min-h-0 flex-col">
         <div className="mb-4 flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div>
@@ -106,8 +106,8 @@ export default function VisualDesignPage() {
               <span>{busy ? "生成中" : "生成视觉"}</span>
             </button>
             <Link className="icon-button border border-line bg-white" href={`/projects/${projectId}/options`}>
-              <ArrowRight size={16} aria-hidden />
-              <span>方案</span>
+              <ArrowLeft size={16} aria-hidden />
+              <span>上一步</span>
             </Link>
           </div>
         </div>

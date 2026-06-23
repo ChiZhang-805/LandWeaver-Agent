@@ -215,6 +215,20 @@ export function parseBrief(projectId: string, userText: string) {
   });
 }
 
+export function previewBrief(projectId: string, userText: string) {
+  return request<PlanningBrief>(`/api/projects/${projectId}/brief/preview`, {
+    method: "POST",
+    body: JSON.stringify({ user_text: userText })
+  });
+}
+
+export function saveBrief(projectId: string, payload: PlanningBrief) {
+  return request<PlanningBrief>(`/api/projects/${projectId}/brief`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
 export function saveConstraints(projectId: string, payload: ConstraintSet) {
   return request<ConstraintSet>(`/api/projects/${projectId}/constraints`, {
     method: "POST",

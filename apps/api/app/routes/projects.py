@@ -354,6 +354,21 @@ def create_brief(project_id: str, payload: PlanningBriefInput) -> PlanningBrief:
     return brief
 
 
+@router.post("/projects/{project_id}/brief/preview", response_model=PlanningBrief)
+def preview_brief(project_id: str, payload: PlanningBriefInput) -> PlanningBrief:
+    _project_or_404(project_id)
+    return parse_planning_brief(payload.user_text)
+
+
+@router.put("/projects/{project_id}/brief", response_model=PlanningBrief)
+def save_brief(project_id: str, payload: PlanningBrief) -> PlanningBrief:
+    _project_or_404(project_id)
+    _clear_project_options(project_id)
+    STORE.briefs[project_id] = payload
+    STORE.persist()
+    return payload
+
+
 @router.post("/projects/{project_id}/constraints", response_model=ConstraintSet)
 def create_constraints(project_id: str, payload: ConstraintSet) -> ConstraintSet:
     _project_or_404(project_id)
